@@ -1,0 +1,232 @@
+:root {
+  --main-color: #3685B5;
+  --button-color: #F7ECE1;
+}
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+html,
+body {
+  font: 13px Helvetica, Arial;
+  height: 100%;
+  overflow: hidden;
+}
+.video-container {
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  background-color: var(--main-color);
+  position: fixed;
+  width: 100%;
+  z-index: 9;
+}
+.video-container video {
+  height: 200px;
+}
+.video-container div {
+  display: inline;
+}
+form {
+  background: var(--main-color);
+  padding: 3px;
+  position: fixed;
+  bottom: 0;
+  width: 70%;
+  display: inline-block;
+}
+
+form input {
+  border: 0;
+  padding: 10px;
+  width: 85%;
+  margin-right: 0.5%;
+}
+form button {
+  width: 6.5%;
+  background: var(--button-color);
+  border: none;
+  padding: 10px;
+  text-align: center;
+}
+#mainstage {
+  pointer-events: auto;
+  position: relative;
+  top: 200px;
+  height: 68%;
+  width: 70%;
+}
+#canvas,
+#rr {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+#canvas {
+  touch-action: none;
+  cursor: url(
+      assets/Pencil_Cursor.png
+    ),
+    none;
+}
+#rr {
+  display: none;
+  z-index: 9;
+}
+#controls {
+  background: var(--main-color);
+  padding: 3px;
+  bottom: 39px;
+  left: 0;
+  position: absolute;
+  width: 100%;
+}
+#controls button {
+  background: var(--button-color);
+  border: none;
+  padding: 10px;
+  padding-right: 10px;
+}
+body {
+  display: grid;
+  font: 13px Helvetica, Arial;
+}
+#preload {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
+  background: var(--main-color);
+  z-index: 10;
+}
+#sidebar {
+  z-index: 9;
+  height: 100%;
+  width: 30%;
+  position: fixed;
+  top: 200px;
+  right: 0;
+  bottom: 0;
+  background-color: var(--main-color);
+  padding-top: 0px;
+  color: #fff;
+  font-size: 16px;
+}
+#messageslist {
+  overflow: scroll;
+  overflow-x: hidden;
+}
+#messages {
+  position: relative;
+  top: 0px;
+  height: 100%;
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+#messages li {
+  padding: 5px 10px;
+  color: white;
+}
+.inp {
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  left: 37.5%;
+  width: 100%;
+  max-width: 280px;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.inp .label {
+  position: absolute;
+  top: 20px;
+  left: 12px;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
+  transform-origin: 0 0;
+  transform: translate3d(0, 0, 0);
+  transition: all 0.2s ease;
+  pointer-events: none;
+}
+.inp .focus-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.5);
+  z-index: -1;
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.inp input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  border: 0;
+  font-family: inherit;
+  padding: 16px 12px 0 12px;
+  height: 56px;
+  font-size: 16px;
+  font-weight: 400;
+  background: rgba(0, 0, 0, 0.02);
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.3);
+  color: #000;
+  transition: all 0.15s ease;
+}
+.inp input:hover {
+  background: rgba(0, 0, 0, 0.04);
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.5);
+}
+.inp input:not(:placeholder-shown) + .label {
+  color: rgba(0, 0, 0, 0.5);
+  transform: translate3d(0, -12px, 0) scale(0.75);
+}
+.inp input:focus {
+  background: rgba(0, 0, 0, 0.05);
+  outline: none;
+  box-shadow: inset 0 -2px 0 #0077FF;
+}
+.inp input:focus + .label {
+  color: #0077FF;
+  transform: translate3d(0, -12px, 0) scale(0.75);
+}
+.inp input:focus + .label + .focus-bg {
+  transform: scaleX(1);
+  transition: all 0.1s ease;
+}
+.float {
+  position: absolute;
+  bottom: 0;
+  width: 60px;
+  height: 60px;
+  right: 20px;
+  background-color: #0C9;
+  color: #FFF;
+  border-radius: 50px;
+  text-align: center;
+  box-shadow: 2px 2px 3px #999;
+  z-index: 9;
+}
+.floatcam {
+  position: absolute;
+  bottom: 0;
+  width: 60px;
+  height: 60px;
+  right: 90px;
+  background-color: #0C9;
+  color: #FFF;
+  border-radius: 50px;
+  text-align: center;
+  box-shadow: 2px 2px 3px #999;
+  z-index: 9;
+}
+.my-float, .my-floatcam {
+  margin-top: 22px;
+}
