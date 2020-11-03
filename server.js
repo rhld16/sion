@@ -65,4 +65,4 @@ io.on('connect', (socket) => {
             peers[init_socket_id].emit('initSend', socket.id)
         });
     })
-http.listen($PORT);
+http.listen(process.env.PORT || 3000);
