@@ -19,7 +19,7 @@ body {
   white-space: nowrap;
   background-color: var(--main-color);
   position: fixed;
-  width: 100%;
+  width: 70%;
   z-index: 9;
 }
 .video-container video {
@@ -50,6 +50,10 @@ form button {
   padding: 10px;
   text-align: center;
 }
+.huebee-container {
+  top: auto;
+  bottom: 50px;
+}
 #mainstage {
   pointer-events: auto;
   position: relative;
@@ -57,6 +61,7 @@ form button {
   height: 68%;
   width: 70%;
 }
+
 #canvas,
 #rr {
   width: 100%;
@@ -90,6 +95,17 @@ form button {
   padding: 10px;
   padding-right: 10px;
 }
+#sizediv {
+  background: var(--button-color);
+  border: none;
+  padding: 10px;
+  padding-right: 10px;
+  display: inline;
+}
+#sizediv input {
+  margin-top: 5px;
+
+}
 body {
   display: grid;
   font: 13px Helvetica, Arial;
@@ -103,12 +119,17 @@ body {
   background: var(--main-color);
   z-index: 10;
 }
+#instruc {
+  color: #fff;
+  display: flex;
+  justify-content: center;
+}
 #sidebar {
   z-index: 9;
   height: 100%;
   width: 30%;
   position: fixed;
-  top: 200px;
+  top: 0px;
   right: 0;
   bottom: 0;
   background-color: var(--main-color);
@@ -117,6 +138,8 @@ body {
   font-size: 16px;
 }
 #messageslist {
+  position: relative;
+  top: 200px;
   overflow: scroll;
   overflow-x: hidden;
 }
@@ -124,13 +147,34 @@ body {
   position: relative;
   top: 0px;
   height: 100%;
-  list-style-type: none;
   margin: 0;
   padding: 0;
 }
 #messages li {
+  list-style-type: none;
   padding: 5px 10px;
   color: white;
+}
+.floatcam, .float {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  bottom: 39px;
+  background-color: #0C9;
+  color: #FFF;
+  border-radius: 50px;
+  text-align: center;
+  box-shadow: 2px 2px 3px #999;
+  z-index: 9;
+}
+.float {
+  right: 20px;
+}
+.floatcam {
+  right: 90px;
+}
+.my-float, .my-floatcam {
+  margin-top: 22px;
 }
 .inp {
   margin: 0;
@@ -200,33 +244,4 @@ body {
 .inp input:focus + .label + .focus-bg {
   transform: scaleX(1);
   transition: all 0.1s ease;
-}
-.float {
-  position: absolute;
-  bottom: 0;
-  width: 60px;
-  height: 60px;
-  right: 20px;
-  background-color: #0C9;
-  color: #FFF;
-  border-radius: 50px;
-  text-align: center;
-  box-shadow: 2px 2px 3px #999;
-  z-index: 9;
-}
-.floatcam {
-  position: absolute;
-  bottom: 0;
-  width: 60px;
-  height: 60px;
-  right: 90px;
-  background-color: #0C9;
-  color: #FFF;
-  border-radius: 50px;
-  text-align: center;
-  box-shadow: 2px 2px 3px #999;
-  z-index: 9;
-}
-.my-float, .my-floatcam {
-  margin-top: 22px;
 }

@@ -3,8 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <title>rhld16</title>
-    <link rel="stylesheet" type="text/css" href="style.css" />
     <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css"/>
+    <link rel="stylesheet" href="huebee.css"/>
+    <link rel="stylesheet" type="text/css" href="style.css" />
   </head>
   <body class="drop">
   <div class="video-container" id="video-container">
@@ -24,25 +25,28 @@
     <a onclick="hide();" href="#" class="floatcam">
       <i class="fas fa-video-slash my-floatcam"></i>
     </a>
-    </div>
-      <div id="sidebar">
-      <div id="messages">
+  </div>
+  <div id="sidebar">
+    <div id="messages">
+      <strong>Active Users:</strong>
+      <ul id="usernameslist"></ul>
       <ul id="messageslist"></ul>
     </div>
-    </div>
+  </div>
     <div id="controls">
       <button onclick="clearCanvas()">Clear</button>
-      <button onclick="current.color='black'">Black</button>
-      <button onclick="current.color='blue'">Blue</button>
-      <button onclick="current.color='red'">Red</button>
-      <button onclick="current.color='green'">Green</button>
       <button id="color">Choose Color</button>
+      <div id="sizediv">
+        Size
+        <input type="range" min="1" max="20" value="5"  oninput="sizeChange(this.value)" id="size">
+      </div>
     </div>
     <form action="">
-      <input id="m"/><button id="send">Send</button>
+      <input id="m" class="mousetrap"/><button id="send">Send</button>
       <button id="share">Screen</button>
     </form>
-    <div id="preload" class="drop" ondrop="droppedImage(event)">
+    <div id="preload" class="drop">
+      <h3 id="instruc">To join, type in a username below and press Enter </h3>
       <label for="inp" class="inp">
         <input type="text" id="inp" placeholder="&nbsp;" />
         <span class="label">Username</span>
@@ -52,9 +56,11 @@
   </body>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.7.2/simplepeer.min.js"></script>
     <script src="assets/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/5.3.3/pixi.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
-    <script src="assets/vanilla-picker.min.js"></script>
-<!--     <script src="https://webrtchacks.github.io/adapter/adapter-latest.js"></script> -->
-    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="assets/huebee.min.js"></script>
+    <script src="assets/mousetrap.min.js"></script>
+    <script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
+    <script src="//cdn.pubnub.com/pubnub-3.14.1.min.js"></script>
     <script src="main.js"></script>
 </html>
