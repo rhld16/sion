@@ -31,24 +31,29 @@
       </a>
     </div>
     <div id="sidebar">
+      <div id="users">
+        <strong>Active Users:</strong>
+        <ul id="usernameslist"></ul>
+      </div>
       <div id="messages">
-        <strong>Active Users:
-        </strong>
-        <ul id="usernameslist">
-        </ul>
-        <ul id="messageslist">
-        </ul>
+        <ul id="messageslist"></ul>
       </div>
     </div>
     <div id="controls">
       <!--       <button onclick="clearCanvas()">Clear</button> -->
-      <button id="color">Choose Color
-      </button>
+      <button id="undo">Undo</button>
+      <button id="color">Choose Color</button>
       <div id="sizediv">
-        Size
-        <input type="range" min="1" max="90" value="5"  oninput="sizeChange(this.value)" id="size">
+        <button id="sizeb">Size</button>
+        <input type="range" min="1" max="90" value="5"  oninput="current.size=(this.value)" id="size">
       </div>
-    </div>
+      <select id="type" name="type" onchange="current.type=(this.value)">
+        <option value="pen">Pen</option>
+        <option value="square">Square</option>
+        <option value="circle">Circle</option>
+      </select>
+      
+      </div>
     <form action="">
       <input id="m" class="mousetrap"/>
       <button id="send">Send
@@ -74,4 +79,6 @@
   <script src="assets/huemouse.min.js"></script>
   <script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
   <script src="main.js"></script>
+  <script src="drawing.js"></script>
+  <script src="/assets/client.min.js"></script>
 </html>
