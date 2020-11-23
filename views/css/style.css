@@ -2,61 +2,53 @@
   --main-color: #3685B5;
   --button-color: #fff;
 }
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
 html,
 body {
   font: 13px Helvetica, Arial;
   height: 100%;
   overflow: hidden;
-  margin-left: 0px;
+  margin: 0px;
 }
 .video-container {
   overflow-x: auto;
   overflow-y: hidden;
   white-space: nowrap;
   background-color: var(--main-color);
-  position: fixed;
+  position: absolute;
+  top: 0px;
   width: 70%;
   z-index: 9;
-}
-.video-container * {
   height: 200px;
-  display: inline;
 }
 .video-container div {
-  position: relative;
+  height: 200px;
+    position: relative;
+  width: auto;
+    display:inline;
 }
-.overlaybr {
-  position: absolute;
-  bottom: 3%;
-  left: -10%;
-  z-index: 10;
-  color: white;
+ .overlaybr {
+   position:absolute;
+   width: auto;
+   max-width: 100px;
+   left:-60px;
+   top:0px;
 }
 form {
   background: var(--main-color);
   padding: 3px;
-  position: fixed;
-  bottom: 0;
+  position: absolute;
+  bottom: 0px;
   width: 70%;
   display: inline-block;
 }
-form input {
-  border: 0;
-  padding: 10px;
-  width: 85%;
-  margin-right: 0.5%;
-}
-form button {
-  width: 6.5%;
+form > button, input, select, div > button {
   background: var(--button-color);
   border: none;
-  padding: 10px;
-  text-align: center;
+  padding: 10px 10px 10px 10px;
+  display: inline;
+}
+form > input {
+  width: 50%;
 }
 .huebee-container {
   top: auto;
@@ -77,31 +69,15 @@ form button {
   top: 0px;
   left: 0px;
   touch-action: none;
-  cursor: url(assets/Pencil_Cursor.png), none;
+  cursor: url(https://sion.glitch.me/media/Pencil_Cursor.png), none;
 }
-#myCanvas {
+#canvas * {
   position: relative;
   width: 100%
 }
 #rr {
   display: none;
   z-index: 9;
-}
-#controls {
-  background: var(--main-color);
-  padding: 3px;
-  bottom: 39px;
-  left: 0px;
-  position: absolute;
-  width: 100%;
-}
-#controls button,
-#controls input,
-#controls select {
-  background: var(--button-color);
-  border: none;
-  padding: 10px 10px 10px 10px;
-  display: inline;
 }
 #sizediv {
   position:relative;
@@ -121,10 +97,11 @@ form button {
   background: var(--main-color);
   z-index: 66;
 }
-#instruc {
-  color: #fff;
-  display: flex;
+#instruc * {
   justify-content: center;
+  display: flex;
+  margin: 0 auto;
+  color: #fff;
 }
 #sidebar {
   z-index: 9;
@@ -222,7 +199,7 @@ form button {
   border: 0;
   font-family: inherit;
   padding: 16px 12px 0 12px;
-  height: 56px;
+  height: 40px;
   font-size: 16px;
   font-weight: 400;
   background: rgba(0, 0, 0, 0.02);

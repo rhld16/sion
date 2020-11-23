@@ -5,7 +5,8 @@
     <title>rhld16
     </title>
     <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css"/>
-    <link rel="stylesheet" type="text/css" href="style.css" />
+    <link rel="stylesheet" type="text/css" href="css/style.css" />
+    <link rel="shortcut icon" href="media/hrana.jpg">
   </head>
   <body class="drop">
     <div class="video-container" id="video-container">
@@ -16,8 +17,8 @@
     </div>
     <div id="mainstage">
       <div id="canvas">
-        <canvas id="myCanvas">
-        </canvas>
+        <canvas id="myCanvas"></canvas>
+        <canvas style="display: none;" id="game"></canvas>
       </div>
       <div id="rr">
       </div>
@@ -33,14 +34,13 @@
     <div id="sidebar">
       <div id="users">
         <strong>Active Users:</strong>
-        <ul id="usernameslist"></ul>
+        <ul id="userslist"></ul>
       </div>
       <div id="messages">
         <ul id="messageslist"></ul>
       </div>
     </div>
-    <div id="controls">
-      <!--       <button onclick="clearCanvas()">Clear</button> -->
+    <form action="">
       <button id="undo">Undo</button>
       <button id="color">Choose Color</button>
       <div id="sizediv">
@@ -52,18 +52,14 @@
         <option value="square">Square</option>
         <option value="circle">Circle</option>
       </select>
-      
-      </div>
-    <form action="">
       <input id="m" class="mousetrap"/>
-      <button id="send">Send
-      </button>
-      <button id="share">Screen
-      </button>
+      <button id="send">Send</button>
+      <button id="share">Screen</button>
     </form>
     <div id="preload" class="drop">
-      <h3 id="instruc">To join, type in a username below and press Enter 
-      </h3>
+      <div id="instruc">
+        <h3>To join, type in a username below and press Enter</h3>
+      </div>
       <label for="inp" class="inp">
         <input type="text" id="inp" placeholder="&nbsp;" />
         <span class="label">Username
@@ -74,11 +70,12 @@
     </div>
   </body>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.7.2/simplepeer.min.js"></script>
-  <script src="assets/jquery.min.js"></script>
+  <script src="js/jquery.min.js"></script>
   <script src="/socket.io/socket.io.js"></script>
-  <script src="assets/huemouse.min.js"></script>
+  <script src="js/huemouse.min.js"></script>
   <script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
-  <script src="main.js"></script>
-  <script src="drawing.js"></script>
-  <script src="/assets/client.min.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/client.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/drawing.js"></script>
 </html>
