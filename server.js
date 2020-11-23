@@ -4,10 +4,10 @@ var http = require("http").createServer(app);
 var io = require("socket.io")(http);
 var engine = require("./views/js/game");
 app.enable("trust proxy");
-app.use(function (req, res, next) {
-  if (!req.secure && req.protocol !== "https") res.redirect("https://" + req.get("host") + req.url);
-  next();
-});
+// app.use(function (req, res, next) {
+//   if (!req.secure && req.protocol !== "https") res.redirect("https://" + req.get("host") + req.url);
+//   next();
+// });
 app.use(express.static("views"));
 app.get("/", (req, res) => res.sendFile(__dirname + "/views/index.html"));
 var peers = {};
@@ -16,22 +16,16 @@ var redoStack = [];
 var gameInterval, updateInterval;
 var main = "draw";
 
-function gameLoop() {
-  Object.keys(engine.players).forEach((playerId) => engine.movePlayer(playerId, engine.players[playerId].keys));
-}
-function emitUpdates() {
-  io.emit("gameStateUpdate", {players: engine.players, doubloon: engine.doubloon});
-}
+function gameLoop() {Object.keys(engine.players).forEach((playerId) => engine.movePlayer(playerId, engine.players[playerId].keys))};
+function emitUpdates() {io.emit("gameStateUpdate", {players: engine.players, doubloon: engine.doubloon})};
 io.on("connect", (socket) => {
-  // socket.join("room1");
-  // console.log(Object.keys(socket.rooms));
-  socket.on("login", (udata) => {
-    socket.username = udata;
-    console.log("a client is connected " + udata + " - " + socket.id);
+  socket.curroom="lobby";
+  socket.on("login", (uname) => {
+    socket.username = uname;
+    console.log("a client is connected "+uname+" - "+socket.id);
     peers[socket.id] = socket;
-    socket.broadcast.emit('initReceive', socket.id);
-
-    socket.emit("history", plots);
+    socket.to(socket.curroom).emit('initReceive', socket.id);
+    socket.to(socket.curroom).emit("history", plots);
     var posX = -10;
     var posY = -10;
     while (!engine.isValidPosition({ x: posX, y: posY }, socket.id)) {
@@ -44,12 +38,15 @@ io.on("connect", (socket) => {
       y: posY,
       colour: engine.stringToColour(socket.id),
       score: 0,
-      name: udata,
+      name: uname,
       keys: [],
     };
   });
-  socket.on("room", (room) => {});
-  socket.on("needname", (data) => socket.emit("needname", {id: data, username: peers[data].username}));
+  socket.on("room", (room, newroom) => {
+    socket.leave(room);
+    socket.join(newroom);
+    socket.curroom=newroom;
+  });
   socket.on("refresh", (data) => io.sockets.emit("refresh"));
   socket.on("clear", (data) => io.sockets.emit("clear"));
   socket.on("chat", (data) => io.sockets.emit("chat", data));

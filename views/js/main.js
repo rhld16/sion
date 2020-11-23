@@ -3,6 +3,7 @@
 //-------------------INIT-------------------
 var username;
 var socket;
+var curroom;
 var player = null;
 var screen = false;
 var localStream = null;
@@ -34,11 +35,39 @@ $("form").submit(function (e) {
   if (m != "") {
     if (cooldown()) {
       lastChat = Date.now();
-      socket.emit("chat", {
-        message: m,
-        username: username,
-        id: socket.io.engine.id,
-      });
+      if (/^[\/]/.test(m)) {
+        const args = m.slice("/".length).trim().split(/\s+/);
+        const command = args.shift().toLowerCase();
+        if (command == "rr") {
+          if (data.id == socket.io.engine.id) {
+            if (args[0]) socket.emit("rr", args[0]);
+            else socket.emit("rr", "");
+          }
+        } else if (command == "clear") socket.emit("clear");
+        else if (command == "refresh") socket.emit("refresh");
+        else if (command == "room") {
+          socket.emit("room", curroom, args[0]);
+          for (let socket_id in peers) {
+            removePeer(socket_id);
+          }
+          curroom=args[0];
+          socket.emit("login", username);
+        } else if (command == "canvas") {
+          if (args[0] == "clear") {
+            socket.emit("draw", "clear");
+            clearCanvas();
+          } else if (args[0] == "game") {
+            $("#game").show();
+            $("#myCanvas").hide();
+          } else if (args[0] == "draw") {
+            $("#game").hide();
+            $("#myCanvas").show();
+          }
+        } else if (command == "kick") socket.emit("kick", args[0]);
+        else console.log("Command: "+command+"\n-----------------------------------\n"+args);
+      } else {
+        socket.emit("chat", {message: m, username: username, id: socket.io.engine.id});
+      }
       $("#m").val("");
     }
   }
@@ -74,11 +103,8 @@ function loggedin() {
 }
 function makeid(length) {
   var result = "";
-  var characters =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  for (let i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
+  var characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  for (let i = 0; i < length; i++) result += characters.charAt(Math.floor(Math.random() * characters.length));
   return result;
 }
 function gotLocalMediaStream(stream) {
@@ -183,42 +209,12 @@ function unsetScreen() {
     });
 }
 function init(relogin) {
+  curroom = "lobby";
   socket = io();
+  socket.emit("room", "", curroom);
   if (relogin) socket.emit("login", username);
-  socket.on("chat", function (data) {
+  socket.on("chat", (data) => {
     if (data.message) {
-      if (/^[\/]/.test(data.message)) {
-        const args = data.message.slice("/".length).trim().split(/\s+/);
-        const command = args.shift().toLowerCase();
-        if (command == "rr") {
-          if (data.id == socket.io.engine.id) {
-            if (args[0]) socket.emit("rr", args[0]);
-            else socket.emit("rr", "");
-          }
-        } else if (command == "clear") socket.emit("clear");
-        else if (command == "refresh") socket.emit("refresh");
-        else if (command == "room") socket.emit("room", args[0]);
-        else if (command == "canvas") {
-          if (args[0] == "clear") {
-            socket.emit("draw", "clear");
-            clearCanvas();
-          } else if (args[0] == "game") {
-            $("#game").show();
-            $("#myCanvas").hide();
-          } else if (args[0] == "draw") {
-            $("#game").hide();
-            $("#myCanvas").show();
-          }
-        } else if (command == "kick") socket.emit("kick", args[0]);
-        //$("#messageslist").append(`<li><strong>Invalid Command</strong></li>`);
-        else
-          console.log(
-            "Command: " +
-              command +
-              "\n-----------------------------------\n" +
-              args
-          );
-      } else {
         if (data.id != socket.io.engine.id) {
           var instance = createjs.Sound.play("message");
           instance.volume = 0.2;
@@ -231,7 +227,6 @@ function init(relogin) {
           $("#messageslist").append(
             `<li><strong>${data.username}</strong>: ${data.message}</li>`
           );
-      }
     } else if (data.image) {
       var id = makeid(5);
       let TYPED_ARRAY = new Uint8Array(data.image);
@@ -276,14 +271,10 @@ function init(relogin) {
     instance.volume = 0.75;
     init(relogin);
   }
-  socket.on("signal", (data) => {
-    peers[data.socket_id].signal(data.signal);
-  });
+  socket.on("signal", (data) => {peers[data.socket_id].signal(data.signal)});
   socket.on("gameStateUpdate", updateGameState);
-  socket.on("refresh", function () {
-    location.reload();
-  });
-  socket.on("clear", $("#messageslist").empty());
+  socket.on("refresh", () => {location.reload()});
+  socket.on("clear", () => {$("#messageslist").empty()});
   socket.on("history", (data) => {
     clearCanvas();
     for (let plot in data) {

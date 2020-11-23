@@ -23,6 +23,7 @@ function updateGameState(gameState) {
   doubloon = gameState.doubloon;
   
   var playerCount = Object.keys(players).length;
+  console.log(players)
   var scores = "";
   $("#userslist").empty();
   Object.values(players).sort((a, b) => b.score - a.score).forEach((player, index) => scores+=`<li><span style='border-bottom: 1px solid ${player.colour};'>${player.name}</span> - ${player.score}</li>`);
