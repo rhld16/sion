@@ -1,8 +1,8 @@
-/* global playerSize socket doubloonSize playerSpeed accelPlayer movePlayer*/
+/* global playerSize socket playerSpeed accelPlayer movePlayer*/
 var canvas = document.getElementById("game");
 var ctx = canvas.getContext("2d");
 var keys = [];
-var doubloon, players;
+var coin, players, rooms;
 function resize() {
   ctx.canvas.width = window.innerWidth;
   ctx.canvas.height = window.innerHeight;
@@ -20,24 +20,17 @@ function drawPlayers(players) {
 
 function updateGameState(gameState) {
   players = gameState.players;
-  doubloon = gameState.doubloon;
-  
-  var playerCount = Object.keys(players).length;
-  console.log(players)
-  var scores = "";
-  $("#userslist").empty();
-  Object.values(players).sort((a, b) => b.score - a.score).forEach((player, index) => scores+=`<li><span style='border-bottom: 1px solid ${player.colour};'>${player.name}</span> - ${player.score}</li>`);
-  $("#userslist").append(scores);
-  
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
-  ctx.beginPath();
-  ctx.arc((doubloon.x + doubloonSize / 2) / 5, (doubloon.y + doubloonSize / 2) / 5, doubloonSize / 5, 0, 2 * Math.PI, false);
-  ctx.fillStyle = "gold";
-  ctx.fill();
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = "#003300";
-  ctx.stroke();
+  coin = gameState.coin;
+  if (coin) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
+    ctx.arc((coin.x + coinSize / 2) / 5, (coin.y + coinSize / 2) / 5, coinSize / 5, 0, 2 * Math.PI, false);
+    ctx.fillStyle = "gold";
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#003300";
+    ctx.stroke();
+  }
 
   drawPlayers(players);
 }
@@ -49,12 +42,20 @@ function gameLoop() {
     socket.emit("keys", keys);
     movePlayer(socket.id, keys);
   }
-  updateGameState({ players: players, doubloon: doubloon });
-  // move everyone around
-  Object.keys(players).forEach(playerId => {
-    let player = players[playerId];
-    movePlayer(playerId, player.keys);
-  });
+  updateGameState({ players: players, coin: coin });
+    // move everyone around
+    Object.keys(players).forEach(playerId => {
+      let player = players[playerId];
+      movePlayer(playerId, player.keys);
+    });
+}
+function nameLoop() {
+  var playerCount = Object.keys(players).length;
+  var scores = "";
+  $("#userslist").empty();
+  Object.values(players).sort((a, b) => b.score - a.score).forEach((player, index) => scores+=`<li><span style='border-bottom: 1px solid ${player.colour};'>${player.name}</span> - ${player.score}</li>`);
+  $("#userslist").append(scores);
+
 }
 
 function drawGame() {
@@ -63,4 +64,5 @@ function drawGame() {
 }
 
 setInterval(gameLoop, 40);
+setInterval(nameLoop, 2000);
 requestAnimationFrame(drawGame);

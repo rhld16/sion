@@ -115,16 +115,21 @@ form > input {
   color: #fff;
   font-size: 16px;
 }
-#sidebar li {
+#sidebar ul {
   list-style-type: none;
-  padding: 5px 10px;
+  padding: 0px 10px;
   color: white;
 }
-#users {
+#users, #rooms {
+  position: relative;
   padding-top: 5px;
+  padding-right: 20%;
 }
 #users li {
-  padding: 0px;
+  left: 0px;
+}
+#users {
+  float: left;
 }
 #messageslist {
   position: relative;

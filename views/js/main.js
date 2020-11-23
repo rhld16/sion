@@ -51,6 +51,7 @@ $("form").submit(function (e) {
             removePeer(socket_id);
           }
           curroom=args[0];
+          document.getElementById("room").innerText="Room: "+curroom;
           socket.emit("login", username);
         } else if (command == "canvas") {
           if (args[0] == "clear") {
@@ -212,6 +213,7 @@ function init(relogin) {
   curroom = "lobby";
   socket = io();
   socket.emit("room", "", curroom);
+  document.getElementById("room").innerText="Room: "+curroom;
   if (relogin) socket.emit("login", username);
   socket.on("chat", (data) => {
     if (data.message) {
@@ -255,6 +257,12 @@ function init(relogin) {
     }
     relogin = true;
   });
+  socket.on("rooms", (rooms) => {
+    // var roomlist = "";
+    // $("#roomlist").empty();
+    // rooms.forEach(function(r){roomlist+=`<li>${r}</li>`});
+    // $("#roomlist").append(roomlist);
+  })
   window.addEventListener("offline", isOffline);
   function isOffline() {
     window.addEventListener("online", isOnline);

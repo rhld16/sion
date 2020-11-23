@@ -13,16 +13,32 @@ app.get("/", (req, res) => res.sendFile(__dirname + "/views/index.html"));
 var peers = {};
 var plots = [];
 var redoStack = [];
-var gameInterval, updateInterval;
+var rooms = [];
+var gameInterval, updateInterval, roomList;
 var main = "draw";
 
 function gameLoop() {Object.keys(engine.players).forEach((playerId) => engine.movePlayer(playerId, engine.players[playerId].keys))};
-function emitUpdates() {io.emit("gameStateUpdate", {players: engine.players, doubloon: engine.doubloon})};
+function roomList() {
+  rooms = [];
+  io.sockets.adapter.rooms.forEach(roomCheck);
+}
+function roomCheck(room, p) {
+  var it = room.values();
+  var frt = it.next();
+  var val = frt.value;
+  if (p!=val) {
+    rooms.push(p);
+  }
+}
+function emitUpdates() {
+  io.emit("gameStateUpdate", {players: engine.players, coins: engine.coins})
+};
 io.on("connect", (socket) => {
   socket.curroom="lobby";
   socket.on("login", (uname) => {
     socket.username = uname;
     console.log("a client is connected "+uname+" - "+socket.id);
+    io.sockets.emit("rooms", rooms);
     peers[socket.id] = socket;
     socket.to(socket.curroom).emit('initReceive', socket.id);
     socket.to(socket.curroom).emit("history", plots);
@@ -44,6 +60,7 @@ io.on("connect", (socket) => {
   });
   socket.on("room", (room, newroom) => {
     socket.leave(room);
+    socket.to(socket.curroom).emit("removePeer", socket.id);
     socket.join(newroom);
     socket.curroom=newroom;
   });
@@ -63,7 +80,7 @@ io.on("connect", (socket) => {
   });
   socket.on("disconnect", () => {
     console.log("socket disconnected " + socket.username + " - " + socket.id);
-    socket.broadcast.emit("removePeer", socket.id);
+    socket.to(socket.curroom).emit("removePeer", socket.id);
     delete peers[socket.id];
   });
   socket.on("undo", () => {
@@ -80,8 +97,9 @@ io.on("connect", (socket) => {
   });
   //==========GAME==============
   if (Object.keys(engine.players).length == 0) {
-    engine.shuffleDoubloon();
+    engine.shuffleCoin();
     gameInterval = setInterval(gameLoop, 25);
+    roomInterval = setInterval(roomList, 2000);
     updateInterval = setInterval(emitUpdates, 40);
   }
 
@@ -91,6 +109,7 @@ io.on("connect", (socket) => {
     else {
       clearInterval(gameInterval);
       clearInterval(updateInterval);
+      clearInterval(roomInterval);
     }
   });
 

@@ -1,11 +1,11 @@
 const speed = 5;
 const friction = 0.98;
 var players = {}
-var doubloon = {}
+var coin = {}
 
 const gameSize = 2500;
 const playerSize = 100;
-const doubloonSize = 50;
+const coinSize = 50;
 
 function checkCollision(obj1, obj2) {
   return(Math.abs(obj1.x - obj2.x) <= playerSize && Math.abs(obj1.y - obj2.y) <= playerSize)
@@ -38,19 +38,19 @@ function isValidPosition(newPosition, playerId, shouldRespawn) {
   return true
 }
 
-function shuffleDoubloon() {
+function shuffleCoin() {
   var posX = Math.floor(Math.random() * Number(6000) - 100) + 10
   var posY = Math.floor(Math.random() * Number(gameSize) - 100) + 10
 
-  while (!isValidPosition({ x: posX, y: posY }, '_doubloon')) {
+  while (!isValidPosition({ x: posX, y: posY }, '_coin')) {
     if (!this.navigator) {
       posX = Math.floor(Math.random() * Number(gameSize) - 100) + 10
       posY = Math.floor(Math.random() * Number(gameSize) - 100) + 10
     }
   }
 
-  doubloon.x = posX
-  doubloon.y = posY
+  coin.x = posX
+  coin.y = posY
 }
 
 function movePlayer(id, keys) {
@@ -82,9 +82,9 @@ function movePlayer(id, keys) {
     player.accel.x = 0
     player.accel.y = 0
   }
-  if (checkCollision(player, doubloon)) {
+  if (checkCollision(player, coin)) {
     player.score += 1
-    shuffleDoubloon()
+    shuffleCoin()
   }
 }
 
@@ -109,7 +109,7 @@ if (!this.navigator) {
     playerSize: playerSize,
     gameSize: gameSize,
     isValidPosition: isValidPosition,
-    doubloon: doubloon,
-    shuffleDoubloon: shuffleDoubloon
+    coin: coin,
+    shuffleCoin: shuffleCoin
   }
 }
