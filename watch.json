@@ -10,8 +10,8 @@
       "^views/"
     ],
     "include": [
-      "\\.js$"
+      "\\.js$",
+      "/views/js/game.js"
     ]
-  },
-  "throttle": 1800000
+  }
 }
