@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>rhld16
     </title>
-    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css"/>
-    <link rel="stylesheet" type="text/css" href="css/style.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="css/style.css">
     <link rel="shortcut icon" href="media/hrana.jpg">
   </head>
-  <body class="drop">
+  <body>
     <div class="video-container" id="video-container">
       <div>
         <video id="localVideo" autoplay muted playsinline>
@@ -21,26 +22,29 @@
         <canvas style="display: none;" id="game"></canvas>
       </div>
       <div id="rr">
+        <video id="rvideo" style="width: 100%; height: 100%;"></video>
       </div>
-      <a onclick="mute();" href="#" class="float">
-        <i class="fas fa-microphone-slash my-float">
-        </i>
-      </a>
-      <a onclick="hide();" href="#" class="floatcam">
-        <i class="fas fa-video-slash my-floatcam">
-        </i>
-      </a>
+      <span onclick="mute();" href="#" class="float">
+        <i class="fas fa-microphone-slash my-float"></i>
+      </span>
+      <span onclick="hide();" href="#" class="floatcam">
+        <i class="fas fa-video-slash my-floatcam"></i>
+      </span>
     </div>
     <div id="sidebar">
       <div id="users">
         <strong>Active Users:</strong>
         <ul id="userslist"></ul>
       </div>
+      <div id="rooms">
+        <strong id ="room">Room: </strong>
+        <ul id="roomlist"></ul>
+      </div>
       <div id="messages">
         <ul id="messageslist"></ul>
       </div>
     </div>
-    <form action="">
+    <div id="bottom">
       <button id="undo">Undo</button>
       <button id="color">Choose Color</button>
       <div id="sizediv">
@@ -52,28 +56,28 @@
         <option value="square">Square</option>
         <option value="circle">Circle</option>
       </select>
+    <form action="">
       <input id="m" class="mousetrap"/>
       <button id="send">Send</button>
       <button id="share">Screen</button>
     </form>
+    </div>
     <div id="preload" class="drop">
       <div id="instruc">
         <h3>To join, type in a username below and press Enter</h3>
       </div>
       <label for="inp" class="inp">
         <input type="text" id="inp" placeholder="&nbsp;" />
-        <span class="label">Username
-        </span>
+        <span class="label">Username</span>
         <span class="focus-bg">
         </span>
       </label>
     </div>
   </body>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.7.2/simplepeer.min.js"></script>
-  <script src="js/jquery.min.js"></script>
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="js/huemouse.min.js"></script>
-  <script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
+  <script src="/socket.io/socket.io.min.js"></script>
+  <script src="js/libs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/SoundJS/1.0.2/soundjs.min.js"></script>
   <script src="js/game.js"></script>
   <script src="js/client.js"></script>
   <script src="js/main.js"></script>
