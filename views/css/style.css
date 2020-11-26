@@ -33,7 +33,7 @@ body {
    left:-60px;
    top:0px;
 }
-form {
+#bottom {
   background: var(--main-color);
   padding: 3px;
   position: absolute;
@@ -41,11 +41,18 @@ form {
   width: 70%;
   display: inline-block;
 }
-form > button, input, select, div > button {
+#bottom * {
+  display: inline;
+}
+button, select, input {
   background: var(--button-color);
   border: none;
   padding: 10px 10px 10px 10px;
-  display: inline;
+}
+select {
+  -moz-appearance: none; 
+	-webkit-appearance: none; 
+	appearance: none;
 }
 form > input {
   width: 50%;
@@ -96,6 +103,14 @@ form > input {
   top: 0;
   background: var(--main-color);
   z-index: 66;
+}
+#preload img {
+  width: auto;
+  height: 100px;
+  position: fixed;
+  left: 5px;
+  bottom: 0px;
+  z-index: 67;
 }
 #instruc * {
   justify-content: center;
@@ -153,6 +168,7 @@ form > input {
   text-align: center;
   box-shadow: 2px 2px 3px #999;
   z-index: 9;
+  cursor: pointer;
 }
 .float {
   right: 20px;
