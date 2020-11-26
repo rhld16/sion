@@ -32,12 +32,11 @@ $("form").submit(function(e) {
             if (/^[\/]/.test(m)) {
                 const args = m.slice("/".length).trim().split(/\s+/);
                 const command = args.shift().toLowerCase();
-                if (command == "rr") {
-                    if (args[0]) socket.emit("rr", args);
-                    else socket.emit("rr", "");
-                } else if (command == "clear") socket.emit("clear");
+                if (command == "rr") socket.emit("rr", args);
+                else if (command == "clear") socket.emit("clear");
                 else if (command == "refresh") socket.emit("refresh");
-                else if (command == "room") changeRoom(args[0])
+                else if (command == "room") changeRoom(args[0]);
+                else if (command == "announce") socket.emit("announce", {message: args, username: username, id: socket.id});
                 else if (command == "canvas") {
                     if (args[0] == "clear") {
                         socket.emit("draw", "clear");
@@ -45,28 +44,26 @@ $("form").submit(function(e) {
                     } else if (args[0] == "game") {
                         $("#game").show();
                         $("#myCanvas").hide();
+                    } else if (args[0] == "his") {
+                      socket.emit("draw", "his");
+                        $("#myCanvas").hide();
                     } else if (args[0] == "draw") {
                         $("#game").hide();
                         $("#myCanvas").show();
                     }
                 } else if (command == "kick") socket.emit("kick", args[0]);
-                else console.log("Command: " + command + "\n-----------------------------------\n" + args);
-            } else socket.emit("chat", {message: m, username: username, id: socket.io.engine.id});
+            } else socket.emit("chat", {message: m, username: username, id: socket.id});
             $("#m").val("");
         }
     }
 });
 function cooldown() {
-    const notOver = Date.now() - lastChat < 2000;
-    if (notOver) alert("Stop spamming!");
+    const notOver = Date.now() - lastChat < 1500;
     return !notOver;
 }
-
 function changeRoom(nroom) {
     socket.emit("room", curroom, nroom);
-    for (let socket_id in peers) {
-        removePeer(socket_id);
-    }
+    for (let socket_id in peers) removePeer(socket_id);
     curroom = nroom;
     document.getElementById("room").innerText = "Room: " + curroom;
     socket.emit("login", username);
@@ -78,10 +75,8 @@ $("#share").on("click", function(e) {
 });
 var scrollbar = document.getElementById("messages");
 setInterval(function() {
-    const isScrolledToBottom =
-        scrollbar.scrollHeight - scrollbar.clientHeight <= scrollbar.scrollTop + 30;
-    if (isScrolledToBottom)
-        scrollbar.scrollTop = scrollbar.scrollHeight - scrollbar.clientHeight;
+    const isScrolledToBottom = scrollbar.scrollHeight - scrollbar.clientHeight <= scrollbar.scrollTop + 30;
+    if (isScrolledToBottom) scrollbar.scrollTop = scrollbar.scrollHeight - scrollbar.clientHeight;
 }, 250);
 $("#sizeb").on("click", function(e) {
     e.stopPropagation();
@@ -92,7 +87,7 @@ $(document.body).on("click", function() {
 });
 
 function loggedin() {
-    snowStorm.stop();
+    // snowStorm.stop();
     $("#preload").hide();
     var searchParams = new URLSearchParams(window.location.search);
     navigator.mediaDevices.getUserMedia({
@@ -223,21 +218,20 @@ function init(relogin) {
     document.getElementById("room").innerText = "Room: " + curroom;
     if (relogin) socket.emit("login", username);
     socket.on("chat", (data) => {
-        if (data.message) {
-            if (data.id != socket.io.engine.id) {
-                var instance = createjs.Sound.play("message");
-                instance.volume = 0.2;
-            }
-            if (data.username.toLowerCase() == "rhodri")
-                $("#messageslist").append(
-                    `<li><strong style="color:gold;"><i class="fas fa-crown"></i>${data.username}</strong>: ${data.message}</li>`
-                );
-            else
-                $("#messageslist").append(
-                    `<li><strong>${data.username}</strong>: ${data.message}</li>`
-                );
-        }
+      if (data.id != socket.id) {
+        var instance = createjs.Sound.play("message");
+        instance.volume = 0.2;
+      }
+      if (data.username.toLowerCase() == "rhodri") $("#messageslist").append(`<li><strong style="color:gold;"><i class="fas fa-crown"></i>${data.username}</strong>: ${data.message}</li>`);
+      else $("#messageslist").append(`<li><strong>${data.username}</strong>: ${data.message}</li>`);
     });
+    socket.on("announce", (data) => {
+      if (data.id != socket.id) {
+        var instance = createjs.Sound.play("message");
+        instance.volume = 0.2;
+      }
+      $("#messageslist").append(`<li><strong style="color: red;"><i class="fas fa-bullhorn"></i>${data.username}</strong>: ${data.message}</li>`);
+    })
     socket.on("draw", (data) => drawStream(data));
     socket.on("initReceive", (socket_id) => {
         addPeer(socket_id, false);
@@ -251,32 +245,11 @@ function init(relogin) {
         }
         relogin = true;
     });
-    socket.on("rooms", (rooms) => {
-        var roomlist = "";
-        $("#roomlist").empty();
-        rooms.forEach(function(r) {
-            roomlist += `<li onclick="changeRoom('${r}')" style="cursor: pointer;">${r}</li>`
-        });
-        $("#roomlist").append(roomlist);
-    })
-    window.addEventListener("offline", isOffline);
-
-    function isOffline() {
-        window.addEventListener("online", isOnline);
-        var instance = createjs.Sound.play("disconnect");
-        instance.volume = 0.5;
-    }
-
-    function isOnline() {
-        window.removeEventListener("online", isOnline);
-        createjs.Sound.registerSound(
-            "https://sion.glitch.me/media/online.mp3",
-            "online"
-        );
-        var instance = createjs.Sound.play("online");
-        instance.volume = 0.75;
-        init(relogin);
-    }
+    window.addEventListener("offline", e => {
+      var instance = createjs.Sound.play("disconnect");
+      instance.volume = 0.5;
+      for (let sid in peers) removePeer(sid);
+    });
     socket.on("signal", (data) => {
         peers[data.socket_id].signal(data.signal)
     });
@@ -294,22 +267,22 @@ function init(relogin) {
         }
     });
     socket.on("rr", function(url) {
-        var video = document.getElementById("rvideo");
-        if (!video.playing) {
-          if (url[0] === "time") video.currentTime = url[1]
-          else {
-            if (url) var vId = `https://invidious.kavin.rocks/latest_version?id=${url[0]}&itag=22`;
-            else var vId = "media/Rickroll.mp4";
-            video.src = vId;
-            video.load();
-            $("#rr").show();
-            video.play();
-          }
-        } else {
-            video.stop();
-            $("#rr").hide();
-        }
+      var video = document.getElementById("rvideo");
+      if (url[0] === "time") return (video.currentTime = url[1]);
+      if (video.paused) {
+        if (url[0]) var vId = `https://invidious.kavin.rocks/latest_version?id=${url[0]}&itag=22`;
+        else var vId = "media/Rickroll.mp4";
+        video.src = vId;
+        video.load();
+        $("#rr").show();
+        video.play();
+      } else {
+        video.pause();
+        $("#rr").hide();
+      }
     });
+    setInterval(nameLoop, 2000);
+    setInterval(gameLoop, 30);
     Mousetrap.bind("shift+x", function(e) {
         e.preventDefault();
         mute();
