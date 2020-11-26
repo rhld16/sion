@@ -135,16 +135,21 @@ form > input {
   padding: 0px 10px;
   color: white;
 }
-#users, #rooms {
+#rooms input {
+  padding: 0px;
+  margin: 0px;
+  width: 100px;
+}
+#users {
   position: relative;
   padding-top: 5px;
   padding-right: 20%;
-}
-#users li {
-  left: 0px;
-}
-#users {
   float: left;
+}
+#rooms {
+  position: absolute;
+  left: 150px;
+  top: 5px;
 }
 #messageslist {
   position: relative;

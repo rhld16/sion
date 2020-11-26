@@ -1,9 +1,10 @@
-var express = require("express");
-var compression = require('compression');
-var engine = require("./views/js/game.min");
-var app = express();
-var http = require("http").createServer(app);
-var io = require("socket.io")(http);
+const express = require("express");
+const compression = require('compression');
+const axios = require('axios');
+const engine = require("./views/ps/game.min");
+const app = express();
+const http = require("http").createServer(app);
+const io = require("socket.io")(http);
 app.enable("trust proxy");
 app.use(function(req, res, next) {if (!req.secure) res.redirect("https://" + req.get("host") + req.url);next()});
 app.use(compression());
@@ -13,7 +14,6 @@ var peers = {};
 var plots = [];
 var rooms = [];
 var gameInterval, updateInterval, roomInterval;
-
 
 function gameLoop() {Object.keys(engine.players).forEach((playerId) => engine.movePlayer(playerId, engine.players[playerId].keys))};
 function emitUpdates() {io.sockets.emit("gameStateUpdate", {players: engine.players, coins: engine.coins, rooms: engine.rooms})};
@@ -30,10 +30,14 @@ function roomCheck(room, p) {
     rooms.push(p);
   }
 }
+function noti(e, u) {
+  axios.post("https://api.spontit.com/v3/push",{pushTitle:e,content:u},{headers:{"Content-Type":"application/json","X-Authorization":"3N16G7T91PC2MEVA5TJ9S0L7156VLFC60GE92AWD6NN8LBPFX8M778IJNPT7S4W4PKOSC0ERGCMLGHATGULL63KCOE6DASRB2OSI","X-UserId":"user88490126531"}}).then(o=>{console.log(o.data)}).catch(o=>{console.error(o.response.data)});
+}
 io.on("connect", (socket) => {
     socket.croom = "lobby";
     socket.on("login", (uname) => {
         console.log("a client is connected "+uname+"-"+socket.id);
+        noti("Join", uname);
         peers[socket.id] = socket;
         var posX = -10;
         var posY = -10;
@@ -76,9 +80,9 @@ io.on("connect", (socket) => {
     });
     socket.on("disconnect", () => {
       console.log("socket disconnected "+socket.id);
+      noti("Leave", engine.players[socket.id].name)
       socket.to(socket.croom).emit("removePeer", socket.id);
       delete peers[socket.id];
-      console.log(engine.players[socket.id])
       if (engine.players[socket.id]) delete engine.players[socket.id];
         if (Object.keys(engine.players).length > 0) io.emit("gameStateUpdate", engine.players);
         else {
@@ -102,16 +106,16 @@ io.on("connect", (socket) => {
             signal: data.signal
         });
     });
+    socket.on("announce", (data) => io.sockets.emit("announce", data));
     socket.on("refresh", (data) => io.sockets.emit("refresh"));
     socket.on("clear", (data) => io.sockets.emit("clear"));
-    socket.on("announce", (data) => io.sockets.emit("announce", data));
     socket.on("chat", (data) => io.to(socket.croom).emit("chat", data));
-    socket.on("rr", (data) => io.to(socket.croom).emit("rr", data));
     socket.on("kick", (data) => io.to(data).emit("refresh"));
+    socket.on("rr", (data) => io.to(socket.croom).emit("rr", data));
     //==========GAME==============
     socket.on("keys", function(msg) {
         if (engine.players[socket.id]) engine.players[socket.id].keys = msg;
     });
 });
-http.listen(3000);
+http.listen((process.env.PORT) ? process.env.PORT : 3000);
 console.log("Server is on!🎉");

@@ -66,7 +66,7 @@ function changeRoom(nroom) {
     for (let socket_id in peers) removePeer(socket_id);
     curroom = nroom;
     document.getElementById("room").innerText = "Room: " + curroom;
-    socket.emit("login", username);
+    socket.emit("login", username);  
 }
 $("#share").on("click", function(e) {
     e.preventDefault();
@@ -87,7 +87,6 @@ $(document.body).on("click", function() {
 });
 
 function loggedin() {
-    // snowStorm.stop();
     $("#preload").hide();
     var searchParams = new URLSearchParams(window.location.search);
     navigator.mediaDevices.getUserMedia({

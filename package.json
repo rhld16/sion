@@ -3,13 +3,14 @@
   "engines": {
     "node": ">=12.0"
   },
-  "version": "0.0.1",
+  "version": "0.9",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.17.1",
     "socket.io": "^3.0.3",
-    "compression": "^1.7.4"
+    "compression": "^1.7.4",
+    "axios": "^0.21.0"
   }
 }
