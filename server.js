@@ -6,6 +6,7 @@ var app = express();
 var privateKey = fs.readFileSync('/etc/letsencrypt/live/mc.llew.ga-0001/privkey.pem');
 var certificate = fs.readFileSync('/etc/letsencrypt/live/mc.llew.ga-0001/fullchain.pem');
 var credentials = {key: privateKey, cert: certificate};
+var http = require('http').createServer(app);
 var https = require('https').createServer(credentials, app);
 const engine = require("./views/ps/game.min");
 const io = require("socket.io")(https);
@@ -124,5 +125,6 @@ io.on("connect", (socket) => {
         if (engine.players[socket.id]) engine.players[socket.id].keys = msg;
     });
 });
+http.listen(80);
 https.listen((process.env.PORT) ? process.env.PORT : 443);
 console.log("Server is on!🎉");
