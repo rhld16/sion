@@ -85,7 +85,6 @@ io.on("connect", (socket) => {
     });
     socket.on("disconnect", () => {
       console.log("socket disconnected "+socket.id);
-      noti(engine.players[socket.id].name, "Left")
       socket.to(socket.croom).emit("removePeer", socket.id);
       delete peers[socket.id];
       if (engine.players[socket.id]) delete engine.players[socket.id];
