@@ -36,7 +36,7 @@ $("form").submit(function(e) {
                 else if (command == "clear") socket.emit("clear");
                 else if (command == "refresh") socket.emit("refresh");
                 else if (command == "room") changeRoom(args[0]);
-                else if (command == "announce") socket.emit("announce", {message: args, username: username, id: socket.id});
+                else if (command == "announce") socket.emit("announce", {message: m, username: username, id: socket.id});
                 else if (command == "canvas") {
                     if (args[0] == "clear") {
                         socket.emit("draw", "clear");
