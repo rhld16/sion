@@ -5,6 +5,7 @@ var username;
 var socket;
 var curroom;
 var screen = false;
+var mainstage = "draw"
 var localStream = null;
 var relogin = false;
 const videoChat = document.getElementsByClassName("video-container")[0];
@@ -44,12 +45,11 @@ $("form").submit(function(e) {
                     } else if (args[0] == "game") {
                         $("#game").show();
                         $("#myCanvas").hide();
-                    } else if (args[0] == "his") {
-                      socket.emit("draw", "his");
-                        $("#myCanvas").hide();
+                        mainstage = "game"
                     } else if (args[0] == "draw") {
                         $("#game").hide();
                         $("#myCanvas").show();
+                        mainstage = "draw"
                     }
                 } else if (command == "kick") socket.emit("kick", args[0]);
             } else socket.emit("chat", {message: m, username: username, id: socket.id});
@@ -105,13 +105,6 @@ function gotLocalMediaStream(stream) {
 }
 
 function handleLocalMediaStreamError(error) {
-    let silence = () => {
-        let ctx = new AudioContext(),
-            oscillator = ctx.createOscillator();
-        let dst = oscillator.connect(ctx.createMediaStreamDestination());
-        oscillator.start();
-        return dst.stream.getAudioTracks()[0];
-    };
     let black = () => {
         let canvas = document.createElement("canvas");
         var ctx = canvas.getContext("2d");
@@ -242,6 +235,11 @@ function init(relogin) {
     socket.on("rr", function(url) {
       var video = document.getElementById("rvideo");
       if (url[0] === "time") return (video.currentTime = url[1]);
+      if (url[0] === "stop") {
+        video.pause();
+        $("#rr").hide();
+        return
+      }
       if (video.paused) {
         if (url[0]) var vId = `https://invidious.kavin.rocks/latest_version?id=${url[0]}&itag=22`;
         else var vId = "media/Rickroll.mp4";

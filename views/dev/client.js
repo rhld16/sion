@@ -31,13 +31,15 @@ function updateGameState(gameState) {
 document.body.addEventListener("keydown", e => keys[e.keyCode] = true);
 document.body.addEventListener("keyup", e => keys[e.keyCode] = false);
 function gameLoop() {
-  movePlayer(socket.id, keys);
-  socket.emit("keys", keys);
-  updateGameState({players: players, coins: coins});
-  Object.keys(players).forEach(playerId => {
-    let player = players[playerId];
-    movePlayer(playerId, player.keys);
-  });
+  if (mainstage="game") {
+    movePlayer(socket.id, keys);
+    socket.emit("keys", keys);
+    updateGameState({players: players, coins: coins});
+    Object.keys(players).forEach(playerId => {
+      let player = players[playerId];
+      movePlayer(playerId, player.keys);
+    });
+  }
 }
 function nameLoop() {
   var scores = "";

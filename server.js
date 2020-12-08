@@ -35,9 +35,7 @@ function roomCheck(room, p) {
     rooms.push(p);
   }
 }
-function noti(u,e) {
-  axios.post("https://maker.ifttt.com/trigger/sion/with/key/OGVVHXDv13-LYnsGLbtqC",{value1:u,value2:e},{headers:{"Content-Type":"application/json","X-Authorization":"3N16G7T91PC2MEVA5TJ9S0L7156VLFC60GE92AWD6NN8LBPFX8M778IJNPT7S4W4PKOSC0ERGCMLGHATGULL63KCOE6DASRB2OSI","X-UserId":"user88490126531"}}).then(o=>{console.log(o.data)}).catch(o=>{console.error(o.response.data)});
-}
+function noti(u,e) {axios.post("https://maker.ifttt.com/trigger/sion/with/key/OGVVHXDv13-LYnsGLbtqC",{value1:u,value2:e},{headers:{"Content-Type":"application/json","X-Authorization":"3N16G7T91PC2MEVA5TJ9S0L7156VLFC60GE92AWD6NN8LBPFX8M778IJNPT7S4W4PKOSC0ERGCMLGHATGULL63KCOE6DASRB2OSI","X-UserId":"user88490126531"}}).then(o=>{console.log(o.data)}).catch(o=>{console.error(o.response.data)});}
 io.on("connect", (socket) => {
     socket.croom = "lobby";
     socket.on("login", (uname) => {
@@ -113,10 +111,7 @@ io.on("connect", (socket) => {
     socket.on("announce", (data) => io.sockets.emit("announce", data));
     socket.on("refresh", (data) => io.sockets.emit("refresh"));
     socket.on("clear", (data) => io.sockets.emit("clear"));
-    socket.on("chat", (data) => {
-      noti(engine.players[socket.id].name+" - "+socket.croom, data.message)
-      io.to(socket.croom).emit("chat", data)
-    });
+    socket.on("chat", (data) => io.to(socket.croom).emit("chat", data));
     socket.on("kick", (data) => io.to(data).emit("refresh"));
     socket.on("rr", (data) => io.to(socket.croom).emit("rr", data));
     //==========GAME==============
