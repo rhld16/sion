@@ -39,18 +39,9 @@ $("form").submit(function(e) {
                 else if (command == "room") changeRoom(args[0]);
                 else if (command == "announce") socket.emit("announce", {message: m, username: username, id: socket.id});
                 else if (command == "canvas") {
-                    if (args[0] == "clear") {
-                        socket.emit("draw", "clear");
-                        clearCanvas();
-                    } else if (args[0] == "game") {
-                        $("#game").show();
-                        $("#myCanvas").hide();
-                        mainstage = "game"
-                    } else if (args[0] == "draw") {
-                        $("#game").hide();
-                        $("#myCanvas").show();
-                        mainstage = "draw"
-                    }
+                    if (args[0] == "clear") socket.emit("draw", "clear");
+                    else if (args[0] == "game") socket.emit("stage", "game")
+                    else if (args[0] == "draw") socket.emit("stage", "draw")
                 } else if (command == "kick") socket.emit("kick", args[0]);
             } else socket.emit("chat", {message: m, username: username, id: socket.id});
             $("#m").val("");
@@ -203,6 +194,18 @@ function init(relogin) {
         addPeer(socket_id, false);
         socket.emit("initSend", socket_id);
     });
+    socket.on("stage", (ns) => {
+        if (ns === "draw") {
+            $("#game").hide();
+            $("#myCanvas").show();
+            mainstage = "draw"
+        }
+        if (ns === "game") {
+            $("#game").show();
+            $("#myCanvas").hide();
+            mainstage = "game"
+        }
+    })
     socket.on("initSend", (socket_id) => addPeer(socket_id, true));
     socket.on("removePeer", (socket_id) => removePeer(socket_id));
     socket.on("disconnect", () => {

@@ -31,7 +31,7 @@ function updateGameState(gameState) {
 document.body.addEventListener("keydown", e => keys[e.keyCode] = true);
 document.body.addEventListener("keyup", e => keys[e.keyCode] = false);
 function gameLoop() {
-  if (mainstage="game") {
+  if (mainstage==="game") {
     movePlayer(socket.id, keys);
     socket.emit("keys", keys);
     updateGameState({players: players, coins: coins});
