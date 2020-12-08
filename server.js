@@ -19,13 +19,17 @@ var peers = {};
 var plots = [];
 var rooms = [];
 var gameInterval, updateInterval, roomInterval;
+var mainstage;
 
 function gameLoop() {Object.keys(engine.players).forEach((playerId) => engine.movePlayer(playerId, engine.players[playerId].keys))};
-function emitUpdates() {io.sockets.emit("gameStateUpdate", {players: engine.players, coins: engine.coins, rooms: engine.rooms})};
+function emitUpdates() {
+    if (mainstage === "game") io.sockets.emit("gameStateUpdate", {players: engine.players, coins: engine.coins, rooms: engine.rooms})
+};
 function roomList() {
   rooms = [];
   io.sockets.adapter.rooms.forEach(roomCheck);
   engine.rooms = rooms;
+  if (mainstage === "draw") io.sockets.emit("gameStateUpdate", {players: engine.players, coins: engine.coins, rooms: engine.rooms})
 }
 function roomCheck(room, p) {
   var it = room.values();
@@ -81,6 +85,10 @@ io.on("connect", (socket) => {
         if (plots.length > 100000) plots.splice(0, 1);
         io.sockets.emit("draw", data);
     });
+    socket.on("stage", (ns) => {
+        mainstage = ns;
+        socket.emit("stage", ns)
+    })
     socket.on("disconnect", () => {
       console.log("socket disconnected "+socket.id);
       socket.to(socket.croom).emit("removePeer", socket.id);
