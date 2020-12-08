@@ -5,7 +5,7 @@ var username;
 var socket;
 var curroom;
 var screen = false;
-var mainstage = "draw"
+var mainstage = "draw";
 var localStream = null;
 var relogin = false;
 const videoChat = document.getElementsByClassName("video-container")[0];
@@ -134,7 +134,7 @@ function hide() {
 }
 
 function setScreen() {
-    navigator.mediaDevices.getDisplayMedia({video: true,audio: true}).then((stream) => {
+    navigator.mediaDevices.getDisplayMedia({video: {width: 300},audio: true}).then((stream) => {
             for (let socket_id in peers) {
                 for (let index in peers[socket_id].streams[0].getTracks()) {
                     for (let index2 in stream.getTracks()) {
@@ -152,7 +152,7 @@ function setScreen() {
 }
 
 function unsetScreen() {
-    navigator.mediaDevices.getUserMedia({video: true,audio: true}).then((stream) => {
+    navigator.mediaDevices.getUserMedia({video: {width: 300},audio: true}).then((stream) => {
             for (let socket_id in peers) {
                 for (let index in peers[socket_id].streams[0].getTracks()) {
                     for (let index2 in stream.getTracks()) {

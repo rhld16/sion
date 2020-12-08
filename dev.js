@@ -3,13 +3,9 @@ const express = require("express");
 const axios = require('axios');
 const fs = require('fs');
 var app = express();
-var privateKey = fs.readFileSync('privkey.pem');
-var certificate = fs.readFileSync('fullchain.pem');
-var credentials = {key: privateKey, cert: certificate};
 var http = require('http').createServer(app);
-var https = require('https').createServer(credentials, app);
 const engine = require("./views/ps/game.min");
-const io = require("socket.io")(https);
+const io = require("socket.io")(http);
 app.enable("trust proxy");
 app.use(function(req, res, next) {if (!req.secure) res.redirect("https://" + req.get("host") + req.url);next()});
 app.use(compression());
@@ -39,7 +35,7 @@ function roomCheck(room, p) {
     rooms.push(p);
   }
 }
-function noti(u,e) {axios.post("https://maker.ifttt.com/trigger/sion/with/key/OGVVHXDv13-LYnsGLbtqC",{value1:u,value2:e},{headers:{"Content-Type":"application/json","X-Authorization":"3N16G7T91PC2MEVA5TJ9S0L7156VLFC60GE92AWD6NN8LBPFX8M778IJNPT7S4W4PKOSC0ERGCMLGHATGULL63KCOE6DASRB2OSI","X-UserId":"user88490126531"}}).then(o=>{console.log(o.data)}).catch(o=>{console.error(o.response.data)});}
+function noti() {}
 io.on("connect", (socket) => {
     socket.croom = "lobby";
     socket.on("login", (uname) => {
@@ -128,5 +124,4 @@ io.on("connect", (socket) => {
     });
 });
 http.listen(80);
-https.listen((process.env.PORT) ? process.env.PORT : 443);
 console.log("Server is on!🎉");

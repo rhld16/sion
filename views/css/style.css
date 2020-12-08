@@ -22,9 +22,11 @@ body {
 }
 .video-container div {
   height: 200px;
-    position: relative;
+  position: relative;
   width: auto;
-    display:inline;
+  display: inline;
+  padding: 0;
+  margin: 0;
 }
  .overlaybr {
    position:absolute;
