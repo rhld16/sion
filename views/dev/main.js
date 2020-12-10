@@ -8,6 +8,7 @@ var screen = false;
 var mainstage = "draw";
 var localStream = null;
 var relogin = false;
+var player;
 const videoChat = document.getElementsByClassName("video-container")[0];
 const localVideo = document.getElementById("localVideo");
 var peers = [];
@@ -236,23 +237,38 @@ function init(relogin) {
         }
     });
     socket.on("rr", function(url) {
-      var video = document.getElementById("rvideo");
-      if (url[0] === "time") return (video.currentTime = url[1]);
-      if (url[0] === "stop") {
-        video.pause();
-        $("#rr").hide();
-        return
+      if (url[0] === "time") {
+          return (player.currentTime(url[1]));
       }
-      if (video.paused) {
-        if (url[0]) var vId = `https://invidious.kavin.rocks/latest_version?id=${url[0]}&itag=22`;
-        else var vId = "media/Rickroll.mp4";
-        video.src = vId;
-        video.load();
-        $("#rr").show();
-        video.play();
-      } else {
-        video.pause();
+      if (url[0] === "stop") {
         $("#rr").hide();
+        player.pause();
+        player = null;
+        return false;
+      }
+      if (url[0] === "yt") {
+        if (url[1]) {
+            var video_id = url[1].split('v=')[1];
+            var aP = video_id.indexOf('&');
+            if(aP != -1) video_id = video_id.substring(0, aP);
+            var vId = `https://invidious.kavin.rocks/latest_version?id=${video_id}&itag=22`;
+        }
+        hsrc.src = vId;
+        hsrc.type = "video/mp4"
+        $("#rr").show();
+        player = videojs('hideo', {"fluid": true});
+        player.play();
+      } else {
+        if (url[0] === "time") return
+        if (url[0]) var vId = url[0];
+        else {
+            var vId = "https://boyssmp.ga/media/Rickroll.mp4";
+            hsrc.type = "video/mp4"
+        }
+        hsrc.src = vId;
+        $("#rr").show();
+        player = videojs('hideo', {"fluid": true});
+        player.play();
       }
     });
     setInterval(nameLoop, 2000);
