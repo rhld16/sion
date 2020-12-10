@@ -8,7 +8,7 @@ var certificate = fs.readFileSync('fullchain.pem');
 var credentials = {key: privateKey, cert: certificate};
 var http = require('http').createServer(app);
 var https = require('https').createServer(credentials, app);
-const engine = require("./views/ps/game.min");
+const engine = require("./views/game.min");
 const io = require("socket.io")(https);
 app.enable("trust proxy");
 app.use(function(req, res, next) {if (!req.secure) res.redirect("https://" + req.get("host") + req.url);next()});
