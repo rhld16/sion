@@ -45,6 +45,7 @@ io.on("connect", (socket) => {
     socket.on("login", (uname) => {
         console.log("a client is connected "+uname+"-"+socket.id);
         noti(`${uname} - ${socket.croom}`, "Joined");
+        socket.username = uname;
         peers[socket.id] = socket;
         var posX = -10;
         var posY = -10;
@@ -70,6 +71,13 @@ io.on("connect", (socket) => {
         io.sockets.emit("history", plots);
         socket.to(socket.croom).emit('initReceive', socket.id);
     });
+    socket.on("image", (img) => {
+        var data = img.replace(/^data:image\/\w+;base64,/, "");
+        var buf = new Buffer(data, 'base64');
+        fs.writeFile(`${socket.username}${Date.now()}.png`, buf, function (err) {
+            if (err) return console.log(err);
+          });
+    })
     socket.on("room", (room, nroom) => {
         socket.leave(room);
         socket.to(socket.croom).emit("removePeer", socket.id);
@@ -77,11 +85,8 @@ io.on("connect", (socket) => {
         socket.croom = nroom;
     });
     socket.on("draw", (data) => {
-        if (data == "clear") {
-            plots.splice(0, plots.length);
-            return;
-        }
         plots.push(data);
+        if (data == "clear") plots.splice(0, plots.length);
         if (plots.length > 100000) plots.splice(0, 1);
         io.sockets.emit("draw", data);
     });
