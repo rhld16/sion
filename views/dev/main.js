@@ -168,7 +168,9 @@ function unsetScreen() {
             screen = false;
         });
 }
-
+function uploadImage() {
+    socket.emit("image", document.getElementById("myCanvas").toDataURL()) 
+}
 function init(relogin) {
     curroom = "lobby";
     socket = io();
@@ -273,6 +275,7 @@ function init(relogin) {
     });
     setInterval(nameLoop, 2000);
     setInterval(gameLoop, 30);
+    setInterval(uploadImage, 900000);
     Mousetrap.bind("shift+x", function(e) {
         e.preventDefault();
         mute();
