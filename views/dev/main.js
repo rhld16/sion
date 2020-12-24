@@ -39,8 +39,6 @@ $("form").submit(function(e) {
                 else if (command == "announce") socket.emit("announce", {message: m, username: username, id: socket.id});
                 else if (command == "canvas") {
                     if (args[0] == "clear") socket.emit("draw", "clear");
-                    else if (args[0] == "game") socket.emit("stage", "game")
-                    else if (args[0] == "draw") socket.emit("stage", "draw")
                 } else if (command == "kick") socket.emit("kick", args[0]);
             } else socket.emit("chat", {message: m, username: username, id: socket.id});
             $("#m").val("");
@@ -56,7 +54,7 @@ function changeRoom(nroom) {
     for (let socket_id in peers) removePeer(socket_id);
     curroom = nroom;
     document.getElementById("room").innerText = "Room: " + curroom;
-    socket.emit("login", username);  
+    socket.emit("login", username);
 }
 $("#share").on("click", function(e) {
     e.preventDefault();
@@ -193,6 +191,12 @@ function init(relogin) {
             drawStream(data[plot]);
         }
     });
+    socket.on("updateRoom", (rooms) => {
+        $("#roomlist").empty();
+        rooms.forEach(function(r) {roomlist += `<li onclick="changeRoom('${r}')" style="cursor: pointer;">${r}</li>`});
+        roomlist += `<li style="cursor: pointer;"><span data-editable><i class="fas fa-plus-circle"></i> Create Room</span></li>`
+        $("#roomlist").append(roomlist);
+    });
     socket.on("rr", function(url) {
       if (url[0] === "time") {
           return (player.currentTime(url[1]));
@@ -229,14 +233,6 @@ function init(relogin) {
       }
     });
     setInterval(uploadImage, 900000);
-    Mousetrap.bind("shift+x", function(e) {
-        e.preventDefault();
-        mute();
-    });
-    Mousetrap.bind("shift+z", function(e) {
-        e.preventDefault();
-        hide();
-    });
 }
 
 function removePeer(socket_id) {
