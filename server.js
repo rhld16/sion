@@ -22,8 +22,7 @@ var roomInterval;
 function roomList() {
   rooms = [];
   io.sockets.adapter.rooms.forEach(roomCheck);
-  engine.rooms = rooms;
-  if (mainstage === "draw") io.sockets.emit("gameStateUpdate", {rooms: engine.rooms})
+  io.sockets.emit("roomUpdate", rooms)
 }
 function roomCheck(room, p) {
   var it = room.values();
