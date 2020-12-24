@@ -5,10 +5,8 @@ var username;
 var socket;
 var curroom;
 var screen = false;
-var mainstage = "draw";
 var localStream = null;
 var relogin = false;
-var player;
 const videoChat = document.getElementsByClassName("video-container")[0];
 const localVideo = document.getElementById("localVideo");
 var peers = [];
@@ -77,63 +75,39 @@ $("#sizeb").on("click", function(e) {
 $(document.body).on("click", function() {
     $("#size").hide()
 });
-
 function loggedin() {
     $("#preload").hide();
-    var searchParams = new URLSearchParams(window.location.search);
-    navigator.mediaDevices.getUserMedia({
-        video: {
-            width: 300,
-        },
-        audio: true,
+    navigator.mediaDevices.getUserMedia({video: {width: 300,}, audio: true,
     }).then(gotLocalMediaStream, handleLocalMediaStreamError);
 }
-
 function gotLocalMediaStream(stream) {
     localVideo.onclick = () => localVideo.requestPictureInPicture();
     localVideo.ontouchstart = (e) => localVideo.requestPictureInPicture();
     localVideo.srcObject = localStream = stream;
     init(true);
 }
-
 function handleLocalMediaStreamError(error) {
-    let black = () => {
-        let canvas = document.createElement("canvas");
-        var ctx = canvas.getContext("2d");
-        ctx.fillStyle = "#000";
-        ctx.fillRect(0, 0, 1, 150);
-        var stream = canvas.captureStream(25);
-        return stream;
-    };
     console.log("navigator.getUserMedia error: ", error);
-    localVideo.srcObject = localStream = black();
     init(true);
 }
-
 function mute() {
     localStream.getAudioTracks().forEach((track) => {
         track.enabled = !track.enabled;
         if (track.enabled == true)
-            $(".my-float").replaceWith(
-                "<i class='fas fa-microphone-slash my-float'></i>"
-            );
+            $(".my-float").replaceWith("<i class='fas fa-microphone-slash my-float'></i>");
         else
             $(".my-float").replaceWith("<i class='fas fa-microphone my-float'></i>");
     });
 }
-
 function hide() {
     localStream.getVideoTracks().forEach((track) => {
         track.enabled = !track.enabled;
         if (track.enabled == true)
-            $(".my-floatcam").replaceWith(
-                "<i class='fas fa-video-slash my-floatcam'></i>"
-            );
+            $(".my-floatcam").replaceWith("<i class='fas fa-video-slash my-floatcam'></i>");
         else
             $(".my-floatcam").replaceWith("<i class='fas fa-video my-floatcam'></i>");
     });
 }
-
 function setScreen() {
     navigator.mediaDevices.getDisplayMedia({video: {width: 300},audio: true}).then((stream) => {
             for (let socket_id in peers) {
@@ -168,9 +142,7 @@ function unsetScreen() {
             screen = false;
         });
 }
-function uploadImage() {
-    socket.emit("image", document.getElementById("myCanvas").toDataURL()) 
-}
+function uploadImage() {socket.emit("image", document.getElementById("myCanvas").toDataURL()) }
 function init(relogin) {
     curroom = "lobby";
     socket = io();
@@ -197,18 +169,6 @@ function init(relogin) {
         addPeer(socket_id, false);
         socket.emit("initSend", socket_id);
     });
-    socket.on("stage", (ns) => {
-        if (ns === "draw") {
-            $("#game").hide();
-            $("#myCanvas").show();
-            mainstage = "draw"
-        }
-        if (ns === "game") {
-            $("#game").show();
-            $("#myCanvas").hide();
-            mainstage = "game"
-        }
-    })
     socket.on("initSend", (socket_id) => addPeer(socket_id, true));
     socket.on("removePeer", (socket_id) => removePeer(socket_id));
     socket.on("disconnect", () => {
@@ -225,13 +185,8 @@ function init(relogin) {
     socket.on("signal", (data) => {
         peers[data.socket_id].signal(data.signal)
     });
-    socket.on("gameStateUpdate", (data) => updateGameState(data));
-    socket.on("refresh", () => {
-        location.reload()
-    });
-    socket.on("clear", () => {
-        $("#messageslist").empty()
-    });
+    socket.on("refresh", () => {location.reload()});
+    socket.on("clear", () => {$("#messageslist").empty()});
     socket.on("history", (data) => {
         clearCanvas();
         for (let plot in data) {
@@ -273,8 +228,6 @@ function init(relogin) {
         player.play();
       }
     });
-    setInterval(nameLoop, 2000);
-    setInterval(gameLoop, 30);
     setInterval(uploadImage, 900000);
     Mousetrap.bind("shift+x", function(e) {
         e.preventDefault();
