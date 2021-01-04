@@ -5,275 +5,256 @@ var username;
 var socket;
 var curroom;
 var screen = false;
+var player = document.getElementById("hideo");
+var mainstage = "draw";
 var localStream = null;
 var relogin = false;
+var cCanvas = document.getElementById("confetti");
+var confettiC = confetti.create(cCanvas, {
+  resize: true,
+  useWorker: true
+});
 const videoChat = document.getElementsByClassName("video-container")[0];
 const localVideo = document.getElementById("localVideo");
 var peers = [];
 createjs.Sound.alternateExtensions = ["mp3"];
-createjs.Sound.registerSound("media/message.mp3", "message");
 createjs.Sound.registerSound("media/join.mp3", "join");
 createjs.Sound.registerSound("media/disconnect.mp3", "disconnect");
 //-------------------HTML-FORMS--------------
-!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? $("#inp").focus() : null;
-$("#inp").keypress(function(e) {
-    if (e.which == 13) {
-        username = $("#inp").val();
-        if (username != "") loggedin();
-    }
-});
-var lastChat;
-$("form").submit(function(e) {
-    e.preventDefault();
-    var m = $("#m").val();
-    if (m != "") {
-        if (cooldown()) {
-            lastChat = Date.now();
-            if (/^[\/]/.test(m)) {
-                const args = m.slice("/".length).trim().split(/\s+/);
-                const command = args.shift().toLowerCase();
-                if (command == "rr") socket.emit("rr", args);
-                else if (command == "clear") socket.emit("clear");
-                else if (command == "refresh") socket.emit("refresh");
-                else if (command == "room") changeRoom(args[0]);
-                else if (command == "announce") socket.emit("announce", {message: m, username: username, id: socket.id});
-                else if (command == "canvas") {
-                    if (args[0] == "clear") socket.emit("draw", "clear");
-                } else if (command == "kick") socket.emit("kick", args[0]);
-            } else socket.emit("chat", {message: m, username: username, id: socket.id});
-            $("#m").val("");
-        }
-    }
-});
-function cooldown() {
-    const notOver = Date.now() - lastChat < 1500;
-    return !notOver;
+function notifi(v1, v2) {
+  $.ajax({
+    url: "https://maker.ifttt.com/trigger/sion/with/key/OGVVHXDv13-LYnsGLbtqC",
+    data: {
+      value1: v1,
+      value2: v2
+    },
+    type: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Authorization": "3N16G7T91PC2MEVA5TJ9S0L7156VLFC60GE92AWD6NN8LBPFX8M778IJNPT7S4W4PKOSC0ERGCMLGHATGULL63KCOE6DASRB2OSI"
+    },
+    success: function () {}
+  });
 }
+
 function changeRoom(nroom) {
-    socket.emit("room", curroom, nroom);
-    for (let socket_id in peers) removePeer(socket_id);
-    curroom = nroom;
-    document.getElementById("room").innerText = "Room: " + curroom;
-    socket.emit("login", username);
+  socket.emit("room", curroom, nroom);
+  for (let sid in peers) removePeer(sid);
+  curroom = nroom;
+  document.getElementById("room").innerText = "Room: " + curroom;
+  socket.emit("login", username);
 }
-$("#share").on("click", function(e) {
-    e.preventDefault();
-    if (screen == false) setScreen();
-    else unsetScreen();
+$("#chat").submit(function (e) {
+  e.preventDefault();
+  var m = $("#m").val();
+  if (m != "") {
+    if (/^[\/]/.test(m)) {
+      const args = m.slice("/".length).trim().split(/\s+/);
+      const command = args.shift().toLowerCase();
+      if (command == "rr") socket.emit("rr", args);
+      else if (command == "clear") socket.emit("clear");
+      else if (command == "refresh") socket.emit("refresh");
+      else if (command == "room") changeRoom(args[0]);
+      else if (command == "announce") socket.emit("announce", {
+        message: m,
+        username: username,
+        id: socket.id
+      });
+      else if (command == "canvas") {
+        if (args[0] == "clear") socket.emit("draw", "clear");
+      }
+    } else socket.emit("chat", {
+      message: m,
+      id: socket.id
+    });
+    $("#m").val("");
+  }
 });
-var scrollbar = document.getElementById("messages");
-setInterval(function() {
-    const isScrolledToBottom = scrollbar.scrollHeight - scrollbar.clientHeight <= scrollbar.scrollTop + 30;
-    if (isScrolledToBottom) scrollbar.scrollTop = scrollbar.scrollHeight - scrollbar.clientHeight;
-}, 250);
-$("#sizeb").on("click", function(e) {
-    e.stopPropagation();
-    $("#size").toggle();
+$("#share").on("click", function (e) {
+  e.preventDefault();
+  if (screen == false) setScreen();
+  else unsetScreen();
 });
-$(document.body).on("click", function() {
-    $("#size").hide()
-});
-function loggedin() {
-    $("#preload").hide();
-    navigator.mediaDevices.getUserMedia({video: {width: 300,}, audio: true,
-    }).then(gotLocalMediaStream, handleLocalMediaStreamError);
-}
+
 function gotLocalMediaStream(stream) {
-    localVideo.onclick = () => localVideo.requestPictureInPicture();
-    localVideo.ontouchstart = (e) => localVideo.requestPictureInPicture();
-    localVideo.srcObject = localStream = stream;
-    init(true);
+  localVideo.srcObject = localStream = stream;
+  init(true);
 }
+
 function handleLocalMediaStreamError(error) {
-    console.log("navigator.getUserMedia error: ", error);
-    init(true);
+  notifi("Fail", error.name);
+  window.reload();
 }
+
 function mute() {
-    localStream.getAudioTracks().forEach((track) => {
-        track.enabled = !track.enabled;
-        if (track.enabled == true)
-            $(".my-float").replaceWith("<i class='fas fa-microphone-slash my-float'></i>");
-        else
-            $(".my-float").replaceWith("<i class='fas fa-microphone my-float'></i>");
-    });
+  localStream.getAudioTracks().forEach((track) => {
+    track.enabled = !track.enabled;
+    if (track.enabled == true) $(".my-float").replaceWith("<i class='fas fa-microphone-slash my-float'></i>");
+    else $(".my-float").replaceWith("<i class='fas fa-microphone my-float'></i>");
+  });
 }
+
 function hide() {
-    localStream.getVideoTracks().forEach((track) => {
-        track.enabled = !track.enabled;
-        if (track.enabled == true)
-            $(".my-floatcam").replaceWith("<i class='fas fa-video-slash my-floatcam'></i>");
-        else
-            $(".my-floatcam").replaceWith("<i class='fas fa-video my-floatcam'></i>");
-    });
+  localStream.getVideoTracks().forEach((track) => {
+    track.enabled = !track.enabled;
+    if (track.enabled == true)
+      $(".my-floatcam").replaceWith(
+        "<i class='fas fa-video-slash my-floatcam'></i>"
+      );
+    else
+      $(".my-floatcam").replaceWith("<i class='fas fa-video my-floatcam'></i>");
+  });
 }
+
 function setScreen() {
-    navigator.mediaDevices.getDisplayMedia({video: {width: 300},audio: true}).then((stream) => {
-            for (let socket_id in peers) {
-                for (let index in peers[socket_id].streams[0].getTracks()) {
-                    for (let index2 in stream.getTracks()) {
-                        if (peers[socket_id].streams[0].getTracks()[index].kind === stream.getTracks()[index2].kind) {
-                            peers[socket_id].replaceTrack(peers[socket_id].streams[0].getTracks()[index],stream.getTracks()[index2],peers[socket_id].streams[0]);
-                            stream.getTracks()[index2].onended = function(event) {unsetScreen();};
-                            break;
-                        }
-                    }
-                }
-            }
-            localVideo.srcObject = localStream = stream;
-            screen = true;
-        });
+  navigator.mediaDevices.getDisplayMedia({video: {width: 300},audio: true}).then((stream) => {
+    for (let sid in peers) {
+      for (let index in peers[sid].streams[0].getTracks()) {
+        for (let index2 in stream.getTracks()) {
+          if (peers[sid].streams[0].getTracks()[index].kind === stream.getTracks()[index2].kind) {
+            peers[sid].replaceTrack(peers[sid].streams[0].getTracks()[index], stream.getTracks()[index2], peers[sid].streams[0]);
+            stream.getTracks()[index2].onended = function (event) {
+              unsetScreen();
+            };
+            break;
+          }
+        }
+      }
+    }
+    localVideo.srcObject = localStream = stream;
+    screen = true;
+  });
 }
 
 function unsetScreen() {
-    navigator.mediaDevices.getUserMedia({video: {width: 300},audio: true}).then((stream) => {
-            for (let socket_id in peers) {
-                for (let index in peers[socket_id].streams[0].getTracks()) {
-                    for (let index2 in stream.getTracks()) {
-                        if (peers[socket_id].streams[0].getTracks()[index].kind === stream.getTracks()[index2].kind) {
-                            peers[socket_id].replaceTrack(peers[socket_id].streams[0].getTracks()[index],stream.getTracks()[index2],peers[socket_id].streams[0]);
-                            break;
-                        }
-                    }
-                }
-            }
-            localVideo.srcObject = localStream = stream;
-            screen = false;
-        });
+ navigator.mediaDevices.getUserMedia({video: {width: 300},audio: true}).then((stream) => {
+    for (let sid in peers) {
+      for (let index in peers[sid].streams[0].getTracks()) {
+        for (let index2 in stream.getTracks()) {
+          if (peers[sid].streams[0].getTracks()[index].kind === stream.getTracks()[index2].kind) {
+            peers[sid].replaceTrack(peers[sid].streams[0].getTracks()[index], stream.getTracks()[index2], peers[sid].streams[0]);
+            break;
+          }
+        }
+      }
+    }
+    localVideo.srcObject = localStream = stream;
+    screen = false;
+  });
 }
-function uploadImage() {socket.emit("image", document.getElementById("myCanvas").toDataURL()) }
+
+
 function init(relogin) {
-    curroom = "lobby";
-    socket = io();
-    socket.emit("room", "", curroom);
-    document.getElementById("room").innerText = "Room: " + curroom;
-    if (relogin) socket.emit("login", username);
-    socket.on("chat", (data) => {
-      if (data.id != socket.id) {
-        var instance = createjs.Sound.play("message");
-        instance.volume = 0.2;
-      }
-      if (data.username.toLowerCase() == "rhodri") $("#messageslist").append(`<li><strong style="color:gold;"><i class="fas fa-crown"></i>${data.username}</strong>: ${data.message}</li>`);
-      else $("#messageslist").append(`<li><strong>${data.username}</strong>: ${data.message}</li>`);
-    });
-    socket.on("announce", (data) => {
-      if (data.id != socket.id) {
-        var instance = createjs.Sound.play("message");
-        instance.volume = 0.2;
-      }
-      $("#messageslist").append(`<li><strong style="color: red;"><i class="fas fa-bullhorn"></i>${data.username}</strong>: ${data.message}</li>`);
-    })
-    socket.on("draw", (data) => drawStream(data));
-    socket.on("initReceive", (socket_id) => {
-        addPeer(socket_id, false);
-        socket.emit("initSend", socket_id);
-    });
-    socket.on("initSend", (socket_id) => addPeer(socket_id, true));
-    socket.on("removePeer", (socket_id) => removePeer(socket_id));
-    socket.on("disconnect", () => {
-        for (let socket_id in peers) {
-          removePeer(socket_id);
-        }
-        relogin = true;
-    });
-    window.addEventListener("offline", e => {
-      var instance = createjs.Sound.play("disconnect");
-      instance.volume = 0.5;
-      for (let sid in peers) removePeer(sid);
-    });
-    socket.on("signal", (data) => {
-        peers[data.socket_id].signal(data.signal)
-    });
-    socket.on("refresh", () => {location.reload()});
-    socket.on("clear", () => {$("#messageslist").empty()});
-    socket.on("history", (data) => {
-        clearCanvas();
-        for (let plot in data) {
-            drawStream(data[plot]);
-        }
-    });
-    socket.on("updateRoom", (rooms) => {
-        $("#roomlist").empty();
-        rooms.forEach(function(r) {roomlist += `<li onclick="changeRoom('${r}')" style="cursor: pointer;">${r}</li>`});
-        roomlist += `<li style="cursor: pointer;"><span data-editable><i class="fas fa-plus-circle"></i> Create Room</span></li>`
-        $("#roomlist").append(roomlist);
-    });
-    socket.on("rr", function(url) {
-      if (url[0] === "time") {
-          return (player.currentTime(url[1]));
-      }
-      if (url[0] === "stop") {
-        $("#rr").hide();
-        player.pause();
-        player = null;
-        return false;
-      }
-      if (url[0] === "yt") {
-        if (url[1]) {
-            var video_id = url[1].split('v=')[1];
-            var aP = video_id.indexOf('&');
-            if(aP != -1) video_id = video_id.substring(0, aP);
-            var vId = `https://invidious.kavin.rocks/latest_version?id=${video_id}&itag=22`;
-        }
-        hsrc.src = vId;
-        hsrc.type = "video/mp4"
-        $("#rr").show();
-        player = videojs('hideo', {"fluid": true});
-        player.play();
-      } else {
-        if (url[0] === "time") return
-        if (url[0]) var vId = url[0];
-        else {
-            var vId = "https://boyssmp.ga/media/Rickroll.mp4";
-            hsrc.type = "video/mp4"
-        }
-        hsrc.src = vId;
-        $("#rr").show();
-        player = videojs('hideo', {"fluid": true});
-        player.play();
+  curroom = "lobby";
+  socket = io();
+  socket.emit("room", "", curroom);
+  if (relogin) socket.emit("login", username);
+  socket.on("initReceive", (sid) => {
+    addPeer(sid, false);
+    socket.emit("initSend", sid);
+  });
+  socket.on("initSend", (sid) => addPeer(sid, true));
+  socket.on("removePeer", (sid) => removePeer(sid));
+  socket.on("disconnect", () => {
+    for (let sid in peers) removePeer(sid);
+    relogin = true;
+  });
+  window.addEventListener("offline", e => {
+    for (let sid in peers) removePeer(sid)
+  });
+  socket.on("signal", (data) => {
+    peers[data.sid].signal(data.signal)
+  });
+  socket.on("refresh", () => {
+    location.reload();
+  });
+  socket.on("number", (num) => {
+    $("#bottom").empty();
+    $("#bottom").text(num);
+  });
+  socket.on("bingo", (num) => {
+    $("#bottom").text(num);
+    confettiC({
+      particleCount: 100,
+      spread: 70,
+      origin: {
+        y: 0.95
       }
     });
-    setInterval(uploadImage, 900000);
+  });
+  socket.on("usedNums", (usedNums) => {
+    document.getElementById("messageslist").innerHTML = usedNums.join(", ");
+  });
+  socket.on("video", (url) => {
+    var time = url.split(" ");
+    if (time[0] === "time") {
+      player.currentTime = time[1];
+    } else if (url === "pause") {
+      player.pause();
+    } else if (url === "play") {
+      player.play();
+    } else if (url === "stop") {
+      player.pause();
+      player.style.display = "none";
+      document.getElementById("confetti").style.display = "block";
+    } else {
+      var video_id = url.split('v=')[1];
+      var aP = video_id.indexOf('&');
+      if (aP != -1) video_id = video_id.substring(0, aP);
+      player.src = `https://invidious.kavin.rocks/latest_version?id=${video_id}&itag=22`
+      player.load();
+      player.style.display = "block";
+      document.getElementById("confetti").style.display = "none";
+      player.play();
+    }
+  });
+  socket.on("chat", (data) => {
+    if (data.id != socket.id) {
+      var instance = createjs.Sound.play("message");
+      instance.volume = 0.2;
+    }
+    $("#messageslist").append(`<li>${data.message}</li>`);
+  });
 }
 
 function removePeer(socket_id) {
-    let videoEl = document.getElementById(socket_id);
-    let divEl = document.getElementById(socket_id + "div");
-    if (videoEl) {
-        videoEl.srcObject.getTracks().forEach(function(track) {
-            track.stop();
-        });
-        videoEl.srcObject = null;
-        divEl.parentNode.removeChild(divEl);
-        videoEl.parentNode.removeChild(videoEl);
-    }
-    if (peers[socket_id]) peers[socket_id].destroy();
-    delete peers[socket_id];
+  let videoEl = document.getElementById(socket_id);
+  let divEl = document.getElementById(socket_id + "div");
+  if (videoEl) {
+    videoEl.srcObject.getTracks().forEach(function (track) {
+      track.stop();
+    });
+    videoEl.srcObject = null;
+    divEl.parentNode.removeChild(divEl);
+    videoEl.parentNode.removeChild(videoEl);
+  }
+  if (peers[socket_id]) peers[socket_id].destroy();
+  delete peers[socket_id];
 }
 
-function addPeer(socket_id, am_initiator) {
-    peers[socket_id] = new SimplePeer({
-        initiator: am_initiator,
-        stream: localStream,
+function addPeer(sid, am_init) {
+  peers[sid] = new SimplePeer({
+    initiator: am_init,
+    stream: localStream
+  });
+  peers[sid].on("signal", (data) => {
+    socket.emit("signal", {
+      signal: data,
+      socket_id: sid
     });
-    peers[socket_id].on("signal", (data) => {
-        socket.emit("signal", {
-            signal: data,
-            socket_id: socket_id
-        });
-    });
-    peers[socket_id].on("stream", (stream) => {
-        var newDiv = document.createElement("div");
-        var newVid = document.createElement("video");
-        newVid.setAttribute("playsinline", "");
-        newVid.srcObject = stream;
-        newDiv.id = socket_id + "div";
-        newVid.id = socket_id;
-        newVid.autoplay = true;
-        newVid.onclick = () => newVid.requestPictureInPicture();
-        newVid.ontouchstart = (e) => newVid.requestPictureInPicture();
-        newDiv.appendChild(newVid);
-        videoChat.appendChild(newDiv);
-        var instance = createjs.Sound.play("join");
-        instance.volume = 0.5;
-    });
+  });
+  peers[sid].on("stream", (stream) => {
+    var newDiv = document.createElement("div");
+    var newVid = document.createElement("video");
+    newVid.setAttribute("playsinline", "");
+    newVid.srcObject = stream;
+    newDiv.id = sid + "div";
+    newVid.id = sid;
+    newVid.autoplay = true;
+    newDiv.appendChild(newVid);
+    videoChat.appendChild(newDiv);
+    var instance = createjs.Sound.play("join");
+    instance.volume = 0.5;
+  });
 }
+navigator.mediaDevices.getUserMedia({video: true, audio: true}).then(gotLocalMediaStream, handleLocalMediaStreamError);
