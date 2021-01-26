@@ -9,7 +9,6 @@
   <body>
     <div class="video-container" id="video-container"><div><video id="localVideo" width="350px" autoplay muted playsinline></video></div></div>
     <div id="mainstage">
-        <canvas id="confetti"></canvas>
         <video id="hideo" controls width="auto" height="90%" style="z-index:99; display:none;"></video>
     </div>
     <span onclick="mute();" href="#" class="float"><i class="fas fa-microphone-slash my-float"></i></span>
@@ -27,9 +26,9 @@
       </form>
     </div>
   </body>
-  <script src="/socket.io/socket.io.min.js"></script>
+  <script src="https://cdn.socket.io/socket.io-3.0.1.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.9.3/simplepeer.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/SoundJS/1.0.2/soundjs.min.js"></script>
-  <script src="jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
   <script src="main.js"></script>
 </html>

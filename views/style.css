@@ -17,8 +17,8 @@
     position: absolute;
     top: 0px;
     width: 70%;
-    z-index: 9;
-    height: 200px;
+    z-index: 8;
+    height: 100%;
   }
   .video-container div {
     height: 200px;
@@ -40,6 +40,7 @@
     bottom: 0px;
     width: 70%;
     display: inline-block;
+    z-index: 9;
   }
   #bottom * {
     display: inline;

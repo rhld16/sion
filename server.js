@@ -6,7 +6,7 @@ var certificate = fs.readFileSync('keys/fullchain.pem');
 var http = require('http').createServer(app);
 var https = require('https').createServer({key: privateKey, cert: certificate}, app);
 const io = require("socket.io")(https);
-app.use(function (req, res, next) {if (!req.secure) res.redirect("https://" + req.get("host") + req.url);next()});
+//app.use(function (req, res, next) {if (!req.secure) res.redirect("https://" + req.get("host") + req.url);next()});
 app.use(express.static("views"));
 app.get("/", (req, res) => res.sendFile(__dirname + "/views/index.html"));
 var peers = {};
