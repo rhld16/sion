@@ -8,24 +8,41 @@ var https = require('https').createServer({key: privateKey, cert: certificate}, 
 const io = require("socket.io")(https);
 //app.use(function (req, res, next) {if (!req.secure) res.redirect("https://" + req.get("host") + req.url);next()});
 app.use(express.static("views"));
-app.get("/", (req, res) => res.sendFile(__dirname + "/views/index.html"));
 var peers = {};
 io.on("connect", (socket) => {
   console.log("a client is connected -- " + socket.id);
   peers[socket.id] = socket;
-  socket.broadcast.emit('initReceive', socket.id);
-  socket.on("disconnect", () => {
-    console.log("socket disconnected " + socket.id);
-    socket.emit("removePeer", socket.id);
-    delete peers[socket.id];
+  socket.on('list', function() {
+    let ids = [];
+    for (let peer of peers) {
+      ids.push(peer.id);
+    }
+    console.log("ids length: " + ids.length);
+    socket.emit('listresults', ids);			
   });
-  socket.on("initSend", (init_socket_id) => {
-    console.log("init send by " + socket.id + " for " + init_socket_id);
-    peers[init_socket_id].emit("initSend", socket.id);
+  socket.on('signal', (to, from, data) => {
+    console.log("SIGNAL", to, data);
+    let found = false;
+    for (let peer of peers) {
+      console.log(peer.id, to);
+      if (peer.id == to) {
+        console.log("Found Peer, sending signal");
+        peer.emit('signal', to, from, data);
+        found = true;
+        break;
+      }				
+    }	
+    if (!found) console.log("never found peer");
   });
-  socket.on("signal", (data) => {
-    if (!peers[data.sid]) return;
-    peers[data.sid].emit("signal", {sid: socket.id, signal: data.signal});
+  socket.on('disconnect', function() {
+    console.log("Client has disconnected " + socket.id);
+    io.emit('peer_disconnect', socket.id);
+    for (let peer of peers) {
+      if (peer.id == socket.id) {
+        delete peers[socket.id]
+        break;
+      }
+    }			
   });
   socket.on("chat", (data) => io.emit("chat", data));
 });

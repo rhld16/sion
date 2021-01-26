@@ -100,24 +100,70 @@ function unsetScreen() {
 
 function init() {
   socket = io();
-  socket.on("initReceive", (sid) => {
-    addPeer(sid, false);
-    socket.emit("initSend", sid);
+  socket.on('connect', function() {
+    console.log("**Socket Connected**");
+    console.log("My socket id: ", socket.id);
+
+    socket.emit('list');
   });
-  socket.on("initSend", (sid) => {
-    console.log('got initSend from'+sid)
-    addPeer(sid, true)
+  socket.on('disconnect', function(data) {
+    console.log("Socket disconnected");
+    //for (let sid in peers) removePeer(sid);
   });
-  socket.on("removePeer", (sid) => removePeer(sid));
-  socket.on("disconnect", () => {
-    for (let sid in peers) removePeer(sid);
+  socket.on('peer_disconnect', function(data) {
+    console.log("simplepeer has disconnected " + data);
+    removePeer(data);	
   });
-  socket.on("signal", (data) => {
-    peers[data.sid].signal(data.signal)
+  socket.on('listresults', function (data) {
+    console.log(data);
+    for (let i = 0; i < data.length; i++) {
+      // Make sure it's not us
+      if (data[i] != socket.id) {	
+
+        // create a new simplepeer and we'll be the "initiator"			
+        let simplepeer = addPeer(data[i], true);
+
+        // Push into our array
+        peers.push(simplepeer);	
+      }
+    }
   });
-  socket.on("refresh", () => {
-    location.reload();
+  socket.on('signal', function(to, from, data) {
+				
+    console.log("Got a signal from the server: ", to, from, data);
+
+    // to should be us
+    if (to != socket.id) {
+      console.log("Socket IDs don't match");
+    }
+  
+    // Look for the right simplepeer in our array
+    let found = false;
+    for (let i = 0; i < peers.length; i++)
+    {
+      
+      if (peers[i].socket_id == from) {
+        console.log("Found right object");
+        // Give that simplepeer the signal
+        peers[i].signal(data);
+        found = true;
+        break;
+      }
+    
+    }	
+    if (!found) {
+      console.log("Never found right simplepeer object");
+      // Let's create it then, we won't be the "initiator"
+      let simplepeer = addPeer(from, false);
+      
+      // Push into our array
+      peers.push(simplepeer);	
+        
+      // Tell the new simplepeer that signal
+      simplepeer.signal(data);
+    }
   });
+  socket.on("refresh", () => location.reload());
   socket.on("video", (url) => {
     var time = url.split(" ");
     if (time[0] === "time") {
