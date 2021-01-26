@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 const mcanvas = document.getElementById("myCanvas");
 const mctx = mcanvas.getContext("2d");
 var current = {color: "black", size: 5, type: "pen", x: 0, y: 0};
