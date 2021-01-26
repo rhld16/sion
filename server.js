@@ -13,7 +13,7 @@ var peers = {};
 io.on("connect", (socket) => {
   console.log("a client is connected -- " + socket.id);
   peers[socket.id] = socket;
-  socket.emit('initReceive', socket.id);
+  socket.broadcast.emit('initReceive', socket.id);
   socket.on("disconnect", () => {
     console.log("socket disconnected " + socket.id);
     socket.emit("removePeer", socket.id);
