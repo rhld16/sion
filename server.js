@@ -11,14 +11,12 @@ app.use(express.static("views"));
 app.get("/", (req, res) => res.sendFile(__dirname + "/views/index.html"));
 var peers = {};
 io.on("connect", (socket) => {
-  socket.on("login", (uname) => {
-    console.log("a client is connected -- " + socket.id);
-    peers[socket.id] = socket;
-    socket.to(socket.croom).emit('initReceive', socket.id);
-  });
+  console.log("a client is connected -- " + socket.id);
+  peers[socket.id] = socket;
+  socket.emit('initReceive', socket.id);
   socket.on("disconnect", () => {
     console.log("socket disconnected " + socket.id);
-    socket.to(socket.croom).emit("removePeer", socket.id);
+    socket.emit("removePeer", socket.id);
     delete peers[socket.id];
   });
   socket.on("initSend", (init_socket_id) => {
@@ -29,7 +27,7 @@ io.on("connect", (socket) => {
     if (!peers[data.sid]) return;
     peers[data.sid].emit("signal", {sid: socket.id, signal: data.signal});
   });
-  socket.on("chat", (data) => io.to(socket.croom).emit("chat", data));
+  socket.on("chat", (data) => io.emit("chat", data));
 });
 http.listen(80);
 https.listen(443);
