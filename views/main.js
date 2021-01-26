@@ -100,7 +100,6 @@ function unsetScreen() {
 
 function init() {
   socket = io();
-  socket.emit("login", username);
   socket.on("initReceive", (sid) => {
     addPeer(sid, false);
     socket.emit("initSend", sid);
