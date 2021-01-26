@@ -162,7 +162,10 @@ function removePeer(socket_id) {
 
 function addPeer(sid, am_init) {
   peers[sid] = new SimplePeer({initiator: am_init, stream: localStream});
-  peers[sid].on("signal", (data) => {socket.emit("signal", {signal: data, socket_id: sid});});
+  peers[sid].on("signal", (data) => {
+    console.log(data)
+    socket.emit("signal", {signal: data, socket_id: sid});
+  });
   peers[sid].on("stream", (stream) => {
     var newDiv = document.createElement("div");
     var newVid = document.createElement("video");
