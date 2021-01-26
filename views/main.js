@@ -104,7 +104,10 @@ function init() {
     addPeer(sid, false);
     socket.emit("initSend", sid);
   });
-  socket.on("initSend", (sid) => addPeer(sid, true));
+  socket.on("initSend", (sid) => {
+    console.log('got initSend from'+sid)
+    addPeer(sid, true)
+  });
   socket.on("removePeer", (sid) => removePeer(sid));
   socket.on("disconnect", () => {
     for (let sid in peers) removePeer(sid);
