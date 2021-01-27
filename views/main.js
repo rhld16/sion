@@ -62,19 +62,16 @@ function hide() {
 }
 
 function setScreen() {
-  navigator.mediaDevices.getDisplayMedia({video: {width: 300},audio: true}).then((stream) => {
+  navigator.mediaDevices.getDisplayMedia({video: true,audio: true}).then((stream) => {
     for (let sid in peers) {
-      for (let index in peers[sid].streams[0].getTracks()) {
-        for (let index2 in stream.getTracks()) {
-          if (peers[sid].streams[0].getTracks()[index].kind === stream.getTracks()[index2].kind) {
-            peers[sid].replaceTrack(peers[sid].streams[0].getTracks()[index], stream.getTracks()[index2], peers[sid].streams[0]);
-            stream.getTracks()[index2].onended = function (event) {
-              unsetScreen();
-            };
-            break;
-          }
-        }
-      }
+      peers[sid].removeStream(peers[sid].streams[0])
+      peers[sid].addStream(stream);
+    }
+    for (let index in stream.getTracks()) {
+      stream.getTracks()[index].onended = function (event) {
+        console.log('Screenshare Ended');
+        unsetScreen();
+      };
     }
     localVideo.srcObject = localStream = stream;
     screen = true;
@@ -82,17 +79,11 @@ function setScreen() {
 }
 
 function unsetScreen() {
- navigator.mediaDevices.getUserMedia({video: {width: 300},audio: true}).then((stream) => {
+ navigator.mediaDevices.getUserMedia({video: true,audio: true}).then((stream) => {
     for (let sid in peers) {
-      for (let index in peers[sid].streams[0].getTracks()) {
-        for (let index2 in stream.getTracks()) {
-          if (peers[sid].streams[0].getTracks()[index].kind === stream.getTracks()[index2].kind) {
-            peers[sid].replaceTrack(peers[sid].streams[0].getTracks()[index], stream.getTracks()[index2], peers[sid].streams[0]);
-            break;
-          }
-        }
-      }
-    }
+      peers[sid].removeStream(peers[sid].streams[0])
+      peers[sid].addStream(stream);
+    }   
     localVideo.srcObject = localStream = stream;
     screen = false;
   });
@@ -115,16 +106,13 @@ function init() {
     removePeer(data);	
   });
   socket.on('listresults', function (data) {
-    console.log(data);
     for (let i = 0; i < data.length; i++) {
       // Make sure it's not us
       if (data[i] != socket.id) {	
 
         // create a new simplepeer and we'll be the "initiator"			
-        let simplepeer = addPeer(data[i], true);
-
-        // Push into our array
-        peers.push(simplepeer);	
+        var simplepeer = addPeer(data[i], true);
+        peers.push(simplepeer);
       }
     }
   });
@@ -134,14 +122,13 @@ function init() {
 
     // to should be us
     if (to != socket.id) {
-      console.log("Socket IDs don't match");
+      return console.log("Socket IDs don't match");
     }
   
     // Look for the right simplepeer in our array
     let found = false;
     for (let i = 0; i < peers.length; i++)
     {
-      
       if (peers[i].socket_id == from) {
         console.log("Found right object");
         // Give that simplepeer the signal
@@ -150,7 +137,7 @@ function init() {
         break;
       }
     
-    }	
+    }
     if (!found) {
       console.log("Never found right simplepeer object");
       // Let's create it then, we won't be the "initiator"
@@ -172,7 +159,7 @@ function init() {
       player.pause();
     } else if (url === "play") {
       player.play();
-    } else if (url === "stop") {
+    } else if (url === "stop") {    
       player.pause();
       player.style.display = "none";
       document.getElementById("confetti").style.display = "block";
@@ -209,13 +196,69 @@ function removePeer(socket_id) {
   delete peers[socket_id];
 }
 
+class SimplePeerWrapper {
+
+  constructor(initiator, socket_id, socket, stream, streamCallback, dataCallback) {
+   this.simplepeer = new SimplePeer({
+     initiator: initiator,
+     stream: localStream,
+     trickle: false
+   });				
+
+   // Their socket id, our unique id for them
+   this.socket_id = socket_id;
+
+   // Socket.io Socket
+   this.socket = socket;
+
+   // Our video stream - need getters and setters for this
+   this.stream = stream;
+
+   // Callback for when we get a stream from a peer
+   this.streamCallback = streamCallback;
+
+   // Callback for when we get data form a peer
+   this.dataCallback = dataCallback;
+
+   // simplepeer generates signals which need to be sent across socket
+   this.simplepeer.on('signal', data => {						
+     this.socket.emit('signal', this.socket_id, this.socket.id, data);
+   });
+
+   // When we have a connection, send our stream
+   this.simplepeer.on('connect', () => {
+     console.log('CONNECT')
+     console.log(this.simplepeer);
+     //p.send('whatever' + Math.random())
+
+     // Let's give them our stream
+     this.simplepeer.addStream(stream);
+     console.log("Send our stream");
+   });
+
+   // Stream coming in to us
+   this.simplepeer.on('stream', stream => {
+     console.log('Incoming Stream');
+     streamCallback(stream, this);
+   });		
+   
+   this.simplepeer.on('data', data => {
+     dataCallback(data, this);
+   });
+ }
+
+ sendData(data) {
+   this.simplepeer.send(data);
+ }
+}
+
 function addPeer(sid, am_init) {
-  peers[sid] = new SimplePeer({initiator: am_init, stream: localStream});
-  peers[sid].on("signal", (data) => {
-    console.log(data)
-    socket.emit("signal", {signal: data, socket_id: sid});
+  var peer = new SimplePeer({initiator: am_init, stream: localStream});
+  peer.socket_id=sid;
+  peer.on("signal", (data) => {
+    socket.emit("signal", sid, socket.id, data);
   });
-  peers[sid].on("stream", (stream) => {
+  peer.on("stream", (stream) => {
     var newDiv = document.createElement("div");
     var newVid = document.createElement("video");
     newVid.setAttribute("playsinline", "");
@@ -228,5 +271,6 @@ function addPeer(sid, am_init) {
     var instance = createjs.Sound.play("join");
     instance.volume = 0.5;
   });
+  return peer;
 }
 navigator.mediaDevices.getUserMedia({video: true, audio: true}).then(gotLocalMediaStream, handleLocalMediaStreamError);

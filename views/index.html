@@ -7,7 +7,7 @@
     <link rel="stylesheet" type="text/css" href="style.css">
   </head>
   <body>
-    <div class="video-container" id="video-container"><div><video id="localVideo" width="350px" autoplay muted playsinline></video></div></div>
+    <div class="video-container" id="video-container"><div><video data-tilt id="localVideo" width="350px" autoplay muted playsinline></video></div></div>
     <div id="mainstage">
         <video id="hideo" controls width="auto" height="90%" style="z-index:99; display:none;"></video>
     </div>
@@ -20,7 +20,7 @@
     </div>
     <div id="bottom">
       <form id="chat">
-        <input id="m" class="mousetrap"/>
+        <input id="m""/>
         <button id="send">Send</button>
         <button id="share">Screen</button>
       </form>
@@ -30,5 +30,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.9.3/simplepeer.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/SoundJS/1.0.2/soundjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tilt.js@1.2.1/src/tilt.jquery.min.js"></script>
   <script src="main.js"></script>
 </html>

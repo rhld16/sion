@@ -22,16 +22,19 @@
   }
   .video-container div {
     height: 200px;
-      position: relative;
+    position: relative;
     width: auto;
-      display:inline;
+    display:inline;
   }
-   .overlaybr {
-     position:absolute;
-     width: auto;
-     max-width: 100px;
-     left:-60px;
-     top:0px;
+  .video-container video {
+    max-height: 300px;
+  }
+  .overlaybr {
+    position:absolute;
+    width: auto;
+    max-width: 100px;
+    left:-60px;
+    top:0px;
   }
   #bottom {
     background: var(--main-color);
