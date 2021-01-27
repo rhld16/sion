@@ -10,14 +10,11 @@ const io = require("socket.io")(https);
 app.use(express.static("views"));
 var peers = [];
 io.on("connect", (socket) => {
-  console.log("A client is connected -- " + socket.id);
+  console.log("A client is connected --", socket.id);
   peers.push({socket: socket});
   socket.on('list', function() {
 		let ids = [];
-		for (let i = 0; i < peers.length; i++) {
-			ids.push(peers[i].socket.id);
-		}
-		console.log("IDs length: " + ids.length);
+		for (let peer of peers) {ids.push(peer.socket.id)};
 		socket.emit('listresults', ids);			
 	});
   socket.on('signal', (to, from, data) => {
@@ -35,10 +32,10 @@ io.on("connect", (socket) => {
 		}
 	});
   socket.on('disconnect', function() {
-		console.log("Client has disconnected " + socket.id);
+		console.log("Client has disconnected", socket.id);
 		io.emit('peer_disconnect', socket.id);
-		for (let i = 0; i < peers.length; i++) {
-			if (peers[i].socket.id == socket.id) {
+		for (let [i,peer] of peers.entries()) {
+			if (peer.socket.id == socket.id) {
 				peers.splice(i,1);
 				break;
 			}

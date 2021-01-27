@@ -1,6 +1,5 @@
 'use strict';
 //-------------------INIT-------------------
-var username;
 var socket;
 var screen = false;
 var player = document.getElementById("hideo");
@@ -10,7 +9,7 @@ const localVideo = document.getElementById("localVideo");
 var peers = [];
 createjs.Sound.alternateExtensions = ["mp3"];
 createjs.Sound.registerSound("media/join.mp3", "join");
-createjs.Sound.registerSound("media/disconnect.mp3", "disconnect");
+createjs.Sound.registerSound("media/message.mp3", "message");
 //-------------------HTML-FORMS--------------
 function notifi(t,i){$.ajax({url:"https://maker.ifttt.com/trigger/sion/with/key/OGVVHXDv13-LYnsGLbtqC",data:{value1:t,value2:i},type:"GET",headers:{"Content-Type":"application/json","X-Authorization":"3N16G7T91PC2MEVA5TJ9S0L7156VLFC60GE92AWD6NN8LBPFX8M778IJNPT7S4W4PKOSC0ERGCMLGHATGULL63KCOE6DASRB2OSI"},success:function(){}})}
 
@@ -32,13 +31,30 @@ $("#share").on("click", function (e) {
   else unsetScreen();
 });
 
+function colourBorder(elid, id) {
+  var x = document.getElementsByClassName(elid);
+  for (var i = 0; i < x.length; i++) x[i].style.borderBottom = `thick solid ${stringToColour(id)}`;
+}
+
+var stringToColour = function(str) {
+  var hash = 0;
+  for (var i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  var colour = '#';
+  for (var i = 0; i < 3; i++) {
+    var value = (hash >> (i * 8)) & 0xFF;
+    colour += ('00' + value.toString(16)).substr(-2);
+  }
+  return colour;
+}
+
 function gotLocalMediaStream(stream) {
   localVideo.srcObject = localStream = stream;
   init();
 }
 
 function handleLocalMediaStreamError(error) {
-  notifi("Fail", error.name);
+  alert('no camera');
+  init();
 }
 
 function mute() {
@@ -52,12 +68,8 @@ function mute() {
 function hide() {
   localStream.getVideoTracks().forEach((track) => {
     track.enabled = !track.enabled;
-    if (track.enabled == true)
-      $(".my-floatcam").replaceWith(
-        "<i class='fas fa-video-slash my-floatcam'></i>"
-      );
-    else
-      $(".my-floatcam").replaceWith("<i class='fas fa-video my-floatcam'></i>");
+    if (track.enabled == true) $(".my-floatcam").replaceWith("<i class='fas fa-video-slash my-floatcam'></i>");
+    else $(".my-floatcam").replaceWith("<i class='fas fa-video my-floatcam'></i>");
   });
 }
 
@@ -93,16 +105,12 @@ function init() {
   socket = io();
   socket.on('connect', function() {
     console.log("**Socket Connected**");
-    console.log("My socket id: ", socket.id);
-
+    console.log("My socket id:", socket.id);
+    colourBorder("local", socket.id);
     socket.emit('list');
   });
-  socket.on('disconnect', function(data) {
-    console.log("Socket disconnected");
-    //for (let sid in peers) removePeer(sid);
-  });
   socket.on('peer_disconnect', function(data) {
-    console.log("simplepeer has disconnected " + data);
+    console.log("Peer has disconnected " + data);
     removePeer(data);	
   });
   socket.on('listresults', function (data) {
@@ -110,7 +118,7 @@ function init() {
       // Make sure it's not us
       if (data[i] != socket.id) {	
 
-        // create a new simplepeer and we'll be the "initiator"			
+        // Create a new simplepeer and we'll be the "initiator"			
         var simplepeer = addPeer(data[i], true);
         peers.push(simplepeer);
       }
@@ -118,7 +126,7 @@ function init() {
   });
   socket.on('signal', function(to, from, data) {
 				
-    console.log("Got a signal from the server: ", to, from, data);
+    console.log("Got a signal from the server: ", to, from);
 
     // to should be us
     if (to != socket.id) {
@@ -130,7 +138,6 @@ function init() {
     for (let i = 0; i < peers.length; i++)
     {
       if (peers[i].socket_id == from) {
-        console.log("Found right object");
         // Give that simplepeer the signal
         peers[i].signal(data);
         found = true;
@@ -142,15 +149,12 @@ function init() {
       console.log("Never found right simplepeer object");
       // Let's create it then, we won't be the "initiator"
       let simplepeer = addPeer(from, false);
-      
       // Push into our array
-      peers.push(simplepeer);	
-        
+      peers.push(simplepeer);
       // Tell the new simplepeer that signal
       simplepeer.signal(data);
     }
   });
-  socket.on("refresh", () => location.reload());
   socket.on("video", (url) => {
     var time = url.split(" ");
     if (time[0] === "time") {
@@ -162,7 +166,6 @@ function init() {
     } else if (url === "stop") {    
       player.pause();
       player.style.display = "none";
-      document.getElementById("confetti").style.display = "block";
     } else {
       var video_id = url.split('v=')[1];
       var aP = video_id.indexOf('&');
@@ -170,7 +173,6 @@ function init() {
       player.src = `https://invidious.kavin.rocks/latest_version?id=${video_id}&itag=22`
       player.load();
       player.style.display = "block";
-      document.getElementById("confetti").style.display = "none";
       player.play();
     }
   });
@@ -179,98 +181,46 @@ function init() {
       var instance = createjs.Sound.play("message");
       instance.volume = 0.2;
     }
-    $("#messageslist").append(`<li>${data.message}</li>`);
+    $("#messageslist").append(`<li class=${data.id}>${data.message}</li>`);
+    colourBorder(data.id, data.id);
   });
 }
 
 function removePeer(socket_id) {
-  let videoEl = document.getElementById(socket_id);
   let divEl = document.getElementById(socket_id + "div");
-  if (videoEl) {
-    videoEl.srcObject.getTracks().forEach((track) => track.stop());
-    videoEl.srcObject = null;
-    divEl.parentNode.removeChild(divEl);
-    videoEl.parentNode.removeChild(videoEl);
-  }
+  if (divEl) divEl.remove();
   if (peers[socket_id]) peers[socket_id].destroy();
   delete peers[socket_id];
 }
 
-class SimplePeerWrapper {
-
-  constructor(initiator, socket_id, socket, stream, streamCallback, dataCallback) {
-   this.simplepeer = new SimplePeer({
-     initiator: initiator,
-     stream: localStream,
-     trickle: false
-   });				
-
-   // Their socket id, our unique id for them
-   this.socket_id = socket_id;
-
-   // Socket.io Socket
-   this.socket = socket;
-
-   // Our video stream - need getters and setters for this
-   this.stream = stream;
-
-   // Callback for when we get a stream from a peer
-   this.streamCallback = streamCallback;
-
-   // Callback for when we get data form a peer
-   this.dataCallback = dataCallback;
-
-   // simplepeer generates signals which need to be sent across socket
-   this.simplepeer.on('signal', data => {						
-     this.socket.emit('signal', this.socket_id, this.socket.id, data);
-   });
-
-   // When we have a connection, send our stream
-   this.simplepeer.on('connect', () => {
-     console.log('CONNECT')
-     console.log(this.simplepeer);
-     //p.send('whatever' + Math.random())
-
-     // Let's give them our stream
-     this.simplepeer.addStream(stream);
-     console.log("Send our stream");
-   });
-
-   // Stream coming in to us
-   this.simplepeer.on('stream', stream => {
-     console.log('Incoming Stream');
-     streamCallback(stream, this);
-   });		
-   
-   this.simplepeer.on('data', data => {
-     dataCallback(data, this);
-   });
- }
-
- sendData(data) {
-   this.simplepeer.send(data);
- }
-}
-
 function addPeer(sid, am_init) {
-  var peer = new SimplePeer({initiator: am_init, stream: localStream});
+  var peer = new SimplePeer({initiator: am_init});
   peer.socket_id=sid;
   peer.on("signal", (data) => {
     socket.emit("signal", sid, socket.id, data);
+  });
+  peer.on('connect', () => {
+     console.log('Connected');
+     if (localStream!=null) peer.addStream(localStream);
+     console.log("Sending our stream");
   });
   peer.on("stream", (stream) => {
     var newDiv = document.createElement("div");
     var newVid = document.createElement("video");
     newVid.setAttribute("playsinline", "");
+    $(newVid).tilt({});
+    newVid.autoplay = true;
     newVid.srcObject = stream;
     newDiv.id = sid + "div";
     newVid.id = sid;
-    newVid.autoplay = true;
+    newVid.className = sid;
     newDiv.appendChild(newVid);
     videoChat.appendChild(newDiv);
+    colourBorder(sid, sid);
     var instance = createjs.Sound.play("join");
     instance.volume = 0.5;
   });
   return peer;
 }
+
 navigator.mediaDevices.getUserMedia({video: true, audio: true}).then(gotLocalMediaStream, handleLocalMediaStreamError);
