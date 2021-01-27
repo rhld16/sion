@@ -1,9 +1,8 @@
-:root {
+  :root {
     --main-color: #3685B5;
     --button-color: #fff;
   }
-  html,
-  body {
+  html, body {
     font: 13px Helvetica, Arial;
     height: 100%;
     overflow: hidden;
@@ -16,7 +15,7 @@
     background-color: var(--main-color);
     position: absolute;
     top: 0px;
-    width: 70%;
+    width: 100%;
     z-index: 8;
     height: 100%;
   }
@@ -28,13 +27,6 @@
   }
   .video-container video {
     max-height: 300px;
-  }
-  .overlaybr {
-    position:absolute;
-    width: auto;
-    max-width: 100px;
-    left:-60px;
-    top:0px;
   }
   #bottom {
     background: var(--main-color);
@@ -48,15 +40,10 @@
   #bottom * {
     display: inline;
   }
-  button, select, input {
+  button, input {
     background: var(--button-color);
     border: none;
     padding: 10px 10px 10px 10px;
-  }
-  select {
-    -moz-appearance: none; 
-      -webkit-appearance: none; 
-      appearance: none;
   }
   form > input {
     width: 50%;
@@ -75,14 +62,12 @@
     top: 0px;
     left: 0px;
     touch-action: none;
+    display: none;
+    z-index: 9;
   }
   #canvas * {
     position: relative;
     width: 100%
-  }
-  #rr {
-    display: none;
-    z-index: 9;
   }
   #sidebar {
     z-index: 9;
@@ -92,7 +77,6 @@
     right: 0px;
     bottom: 0px;
     padding: 0px;
-    background-color: var(--main-color);
     color: #fff;
     font-size: 16px;
   }
@@ -116,13 +100,13 @@
     position: absolute;
     width: 60px;
     height: 60px;
-    bottom: 0px;
+    bottom: 10px;
     background-color: #0C9;
     color: #FFF;
     border-radius: 50px;
     text-align: center;
     box-shadow: 2px 2px 3px #999;
-    z-index: 9;
+    z-index: 10;
     cursor: pointer;
   }
   .float {
