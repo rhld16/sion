@@ -8,42 +8,42 @@ var https = require('https').createServer({key: privateKey, cert: certificate}, 
 const io = require("socket.io")(https);
 //app.use(function (req, res, next) {if (!req.secure) res.redirect("https://" + req.get("host") + req.url);next()});
 app.use(express.static("views"));
-var peers = {};
+var peers = [];
 io.on("connect", (socket) => {
-  console.log("a client is connected -- " + socket.id);
-  peers[socket.id] = socket;
+  console.log("A client is connected -- " + socket.id);
+  peers.push({socket: socket});
   socket.on('list', function() {
-    let ids = [];
-    for (let peer of peers) {
-      ids.push(peer.id);
-    }
-    console.log("ids length: " + ids.length);
-    socket.emit('listresults', ids);			
-  });
+		let ids = [];
+		for (let i = 0; i < peers.length; i++) {
+			ids.push(peers[i].socket.id);
+		}
+		console.log("IDs length: " + ids.length);
+		socket.emit('listresults', ids);			
+	});
   socket.on('signal', (to, from, data) => {
-    console.log("SIGNAL", to, data);
-    let found = false;
-    for (let peer of peers) {
-      console.log(peer.id, to);
-      if (peer.id == to) {
-        console.log("Found Peer, sending signal");
-        peer.emit('signal', to, from, data);
-        found = true;
-        break;
-      }				
-    }	
-    if (!found) console.log("never found peer");
-  });
+		let found = false;
+		for (let peer of peers) {
+			if (peer.socket.id == to) {
+				console.log("Found Peer, sending signal");
+				peer.socket.emit('signal', to, from, data);
+				found = true;
+				break;
+			}				
+		}	
+		if (!found) {
+			console.log("Never found peer");
+		}
+	});
   socket.on('disconnect', function() {
-    console.log("Client has disconnected " + socket.id);
-    io.emit('peer_disconnect', socket.id);
-    for (let peer of peers) {
-      if (peer.id == socket.id) {
-        delete peers[socket.id]
-        break;
-      }
-    }			
-  });
+		console.log("Client has disconnected " + socket.id);
+		io.emit('peer_disconnect', socket.id);
+		for (let i = 0; i < peers.length; i++) {
+			if (peers[i].socket.id == socket.id) {
+				peers.splice(i,1);
+				break;
+			}
+		}			
+	});
   socket.on("chat", (data) => io.emit("chat", data));
 });
 http.listen(80);
