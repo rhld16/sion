@@ -21,12 +21,17 @@
   }
   .video-container div {
     height: 200px;
+    max-height: 200px;
     position: relative;
     width: auto;
-    display:inline;
+    display: inline;
   }
   .video-container video {
-    max-height: 300px;
+    height: 200px;
+    max-height: 200px;
+    width: auto;
+    position: relative;
+    display:inline;
   }
   #bottom {
     background: var(--main-color);
@@ -49,29 +54,24 @@
     width: 50%;
   }
   #mainstage {
-    pointer-events: auto;
+    pointer-events: none;
     position: relative;
     top: 200px;
-    height: 60%;
-    width: 70%;
-  }
-  #rr {
-    width: 100%;
+    bottom: 0px;
     height: 100%;
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    touch-action: none;
-    display: none;
-    z-index: 9;
+    z-index: 20;
   }
-  #canvas * {
+  #mainstage video {
     position: relative;
-    width: 100%
+    left: 50%;
+    transform: translateX(-50%);
+    height: 60%;
+    max-height: 60%;
+    z-index: 20;
   }
   #sidebar {
     z-index: 9;
-    width: 30%;
+    width: 20%;
     position: fixed;
     top: 0px;
     right: 0px;
@@ -90,22 +90,24 @@
   }
   #messages {
     position: fixed;
-    width: 30%;
-    top: 30%;
+    width: 20%;
+    top: 200px;
     bottom: 5px;
     overflow-y: auto;
     overflow-x: hidden;
+    text-align: right;
+    overflow-wrap: break-word;
   }
   .floatcam, .float {
     position: absolute;
     width: 60px;
     height: 60px;
     bottom: 10px;
-    background-color: #0C9;
+    background-color:rgba(0, 204, 153, 0.75);
     color: #FFF;
-    border-radius: 50px;
     text-align: center;
-    box-shadow: 2px 2px 3px #999;
+    border-radius: 50px;
+    border: solid 0px rgba(0, 204, 153, 0.75);
     z-index: 10;
     cursor: pointer;
   }

@@ -1,7 +1,7 @@
 'use strict';
 //-------------------INIT-------------------
 var socket;
-var screen = false;
+var amScreen = false, screen = null;
 var player = document.getElementById("hideo");
 var localStream = null;
 const videoChat = document.getElementsByClassName("video-container")[0];
@@ -13,8 +13,10 @@ createjs.Sound.registerSound("media/message.mp3", "message");
 //-------------------HTML-FORMS--------------
 function notifi(t,i){$.ajax({url:"https://maker.ifttt.com/trigger/sion/with/key/OGVVHXDv13-LYnsGLbtqC",data:{value1:t,value2:i},type:"GET",headers:{"Content-Type":"application/json","X-Authorization":"3N16G7T91PC2MEVA5TJ9S0L7156VLFC60GE92AWD6NN8LBPFX8M778IJNPT7S4W4PKOSC0ERGCMLGHATGULL63KCOE6DASRB2OSI"},success:function(){}})}
 
+var onCooldown = false;
 $("#chat").submit(function (e) {
   e.preventDefault();
+  if (onCooldown) return;
   var m = $("#m").val();
   if (m != "") {
     if (/^[\/]/.test(m)) {
@@ -23,12 +25,24 @@ $("#chat").submit(function (e) {
       if (command == "clear") socket.emit("clear");
     } else socket.emit("chat", {message: m, id: socket.id});
     $("#m").val("");
+    onCooldown = true;
+    setTimeout(function() {onCooldown = false}, 3000);
   }
 });
 $("#share").on("click", function (e) {
   e.preventDefault();
-  if (screen == false) setScreen();
-  else unsetScreen();
+  if (amScreen == false) {
+    if (screen == null) {
+      setScreen();
+    } else {
+      alert('Someone else is screensharing');
+    }
+  } else {
+    screen.getTracks().forEach(track => {
+      track.stop();
+      track.dispatchEvent(new Event("ended"));
+    });
+  }
 });
 
 function colourBorder(elid, id) {
@@ -74,66 +88,52 @@ function hide() {
 }
 
 function setScreen() {
-  navigator.mediaDevices.getDisplayMedia({video: true,audio: true}).then((stream) => {
-    for (let sid in peers) {
-      peers[sid].removeStream(peers[sid].streams[0])
-      peers[sid].addStream(stream);
+  navigator.mediaDevices.getDisplayMedia({video: true, audio: false}).then((stream) => {
+    screen = stream;  
+    var [track] = screen.getVideoTracks();
+    track.onended = function() {
+      console.log('screen ended');
+      $('#hideo').hide();
+      screen = null;
+      amScreen = false;        
+      for (let sid in peers) {
+        peers[sid].removeStream(stream);
+      }
     }
-    for (let index in stream.getTracks()) {
-      stream.getTracks()[index].onended = function (event) {
-        console.log('Screenshare Ended');
-        unsetScreen();
-      };
-    }
-    localVideo.srcObject = localStream = stream;
-    screen = true;
-  });
-}
-
-function unsetScreen() {
- navigator.mediaDevices.getUserMedia({video: true,audio: true}).then((stream) => {
+    var newVid = document.getElementById("hideo");
+    newVid.srcObject = screen;
+    $('#hideo').show();
+    amScreen = true;
     for (let sid in peers) {
-      peers[sid].removeStream(peers[sid].streams[0])
-      peers[sid].addStream(stream);
-    }   
-    localVideo.srcObject = localStream = stream;
-    screen = false;
+      peers[sid].addStream(screen);
+    }
   });
 }
 
 function init() {
+  if (new URL(window.location.href).searchParams.get('admin')!=null) $('#share').show();
   socket = io();
   socket.on('connect', function() {
-    console.log("**Socket Connected**");
-    console.log("My socket id:", socket.id);
+    console.log("**Socket Connected** ID:", socket.id);
     colourBorder("local", socket.id);
-    socket.emit('list');
   });
   socket.on('peer_disconnect', function(data) {
     console.log("Peer has disconnected " + data);
     removePeer(data);	
   });
-  socket.on('listresults', function (data) {
+  socket.on('list', function (data) {
     for (let i = 0; i < data.length; i++) {
-      // Make sure it's not us
       if (data[i] != socket.id) {	
-
-        // Create a new simplepeer and we'll be the "initiator"			
         var simplepeer = addPeer(data[i], true);
         peers.push(simplepeer);
       }
     }
   });
   socket.on('signal', function(to, from, data) {
-				
     console.log("Got a signal from the server: ", to, from);
-
-    // to should be us
     if (to != socket.id) {
       return console.log("Socket IDs don't match");
     }
-  
-    // Look for the right simplepeer in our array
     let found = false;
     for (let i = 0; i < peers.length; i++)
     {
@@ -155,35 +155,25 @@ function init() {
       simplepeer.signal(data);
     }
   });
-  socket.on("video", (url) => {
-    var time = url.split(" ");
-    if (time[0] === "time") {
-      player.currentTime = time[1];
-    } else if (url === "pause") {
-      player.pause();
-    } else if (url === "play") {
-      player.play();
-    } else if (url === "stop") {    
-      player.pause();
-      player.style.display = "none";
-    } else {
-      var video_id = url.split('v=')[1];
-      var aP = video_id.indexOf('&');
-      if (aP != -1) video_id = video_id.substring(0, aP);
-      player.src = `https://invidious.kavin.rocks/latest_version?id=${video_id}&itag=22`
-      player.load();
-      player.style.display = "block";
-      player.play();
-    }
-  });
   socket.on("chat", (data) => {
     if (data.id != socket.id) {
       var instance = createjs.Sound.play("message");
       instance.volume = 0.2;
     }
-    $("#messageslist").append(`<li class=${data.id}>${data.message}</li>`);
-    colourBorder(data.id, data.id);
+    appendChat(data);
   });
+  socket.on("chats", (chats) => {
+    $('#messageslist').empty();
+    chats.forEach(chat => appendChat(chat));
+  });
+}
+
+function appendChat(data) {
+  $("#messageslist").append(`<li class=${data.id}>${data.message}</li>`);
+  colourBorder(data.id, data.id);
+  var chat = document.getElementById('messages');
+  chat.scrollTop = chat.scrollHeight;
+  return true;
 }
 
 function removePeer(socket_id) {
@@ -194,31 +184,44 @@ function removePeer(socket_id) {
 }
 
 function addPeer(sid, am_init) {
-  var peer = new SimplePeer({initiator: am_init});
+  var peer = new SimplePeer({initiator: am_init, trickle: false});
   peer.socket_id=sid;
   peer.on("signal", (data) => {
     socket.emit("signal", sid, socket.id, data);
   });
   peer.on('connect', () => {
-     console.log('Connected');
-     if (localStream!=null) peer.addStream(localStream);
-     console.log("Sending our stream");
+    console.log('Connected');
+    if (localStream!=null) peer.addStream(localStream);
+    if (screen!=null) peer.addStream(screen);
+    console.log("Sending our stream");
   });
   peer.on("stream", (stream) => {
-    var newDiv = document.createElement("div");
-    var newVid = document.createElement("video");
-    newVid.setAttribute("playsinline", "");
-    $(newVid).tilt({});
-    newVid.autoplay = true;
-    newVid.srcObject = stream;
-    newDiv.id = sid + "div";
-    newVid.id = sid;
-    newVid.className = sid;
-    newDiv.appendChild(newVid);
-    videoChat.appendChild(newDiv);
-    colourBorder(sid, sid);
-    var instance = createjs.Sound.play("join");
-    instance.volume = 0.5;
+    console.log(stream.getTracks())
+    if (stream.getTracks().length === 2) {
+      console.log('video')
+      var newDiv = document.createElement("div");
+      var newVid = document.createElement("video");
+      newVid.setAttribute("playsinline", "");
+      newVid.autoplay = true;
+      newVid.srcObject = stream;
+      newDiv.id = sid + "div";
+      newVid.id = sid;
+      newVid.className = sid;
+      newDiv.appendChild(newVid);
+      videoChat.appendChild(newDiv);
+      colourBorder(sid, sid);
+      var instance = createjs.Sound.play("join");
+      instance.volume = 0.5;
+    } else {
+      console.log('screen');
+      var newVid = document.getElementById("hideo");
+      newVid.srcObject = stream;
+      $('#hideo').show();
+      stream.onremovetrack = ({track}) => {
+        console.log(`screen was removed.`);
+        $('#hideo').hide();
+      };
+    }
   });
   return peer;
 }

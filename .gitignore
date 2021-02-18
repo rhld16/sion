@@ -1,3 +1,5 @@
 package-lock.json
 shrinkwrap.yaml
 node_modules
+keys/
+json.sqlite
