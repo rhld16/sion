@@ -1,73 +1,77 @@
 const express = require("express");
-const fs = require('fs');
-const db = require('quick.db');
-var app = express();
-var privateKey = fs.readFileSync('keys/privkey.pem');
-var certificate = fs.readFileSync('keys/fullchain.pem');
-var http = require('http').createServer(app);
-var https = require('https').createServer({key: privateKey, cert: certificate}, app);
-const io = require("socket.io")(https);
-//app.use(function (req, res, next) {if (!req.secure) res.redirect("https://" + req.get("host") + req.url);next()});
+const app = express();
 app.use(express.static("views"));
+const fs = require('fs');
+const WebSocket = require('ws');
+const WebSocketServer = require('ws').Server;
+const { v4: uuid } = require('uuid');
+
+const serverConfig = {
+	key: fs.readFileSync('keys/key.pem'),
+	cert: fs.readFileSync('keys/cert.pem'),
+};
+const http = require('http').createServer(app);
+const https = require('https').createServer(serverConfig, app);
+const wss = new WebSocketServer({ server: https });
+
 var peers = [];
-io.on("connect", (socket) => {
-	console.log(new Date().toUTCString()+" Client has connected -- "+socket.id);
-	peers.push({socket: socket});
-	socket.emit("chats", db.get("chats"));
+
+wss.on('connection', function (ws) {
+	ws.id = uuid();
+	console.log(new Date().toUTCString(), "Client has connected --", ws.id);
+	peers[ws.id] = { ws: ws, colour: randomColour() };
 	let ids = [];
-	for (let peer of peers) {ids.push(peer.socket.id)};
-	socket.emit('list', ids);
-	socket.on('signal', (to, from, data) => {
-		let found = false;
-		for (let peer of peers) {
-			if (peer.socket.id == to) {
-				console.log("Found Peer, sending signal");
-				peer.socket.emit('signal', to, from, data);
-				found = true;
+	for (let id in peers) ids.push(id);
+	peers[ws.id].ws.send(JSON.stringify({ type: 'initialise', ids: ids, myid: ws.id }));
+
+	ws.on('message', function (data) {
+		data = JSON.parse(data);
+		switch (data.type) {
+			case ("signal"):
+				if (data.to in peers) {
+					console.log("Sending signal")
+					peers[data.to].ws.send(JSON.stringify({ type: 'signal', from: ws.id, data: data.data }));
+				} else {
+					console.log("Peer doesn't exist");
+				}
 				break;
-			}				
-		}	
-		if (!found) console.log("Never found peer");
-	});
-	socket.on('disconnect', function() {
-		console.log(new Date().toUTCString()+" Client has disconnected -- "+socket.id);
-		io.emit('peer_disconnect', socket.id);
-		for (let [i,peer] of peers.entries()) {
-			if (peer.socket.id == socket.id) {
-				peers.splice(i,1);
+			case ("colour"):
+				peers[ws.id].ws.send(JSON.stringify({ type: 'colour', id: data.id, colour: peers[data.id].colour }));
 				break;
-			}
-		}			
+			case ("chat"):
+				wss.broadcast(JSON.stringify({ type: 'chat', message: data.message, id: ws.id }));
+				break;
+			default:
+				console.log('received: %s', data);
+		}
 	});
-	socket.on("chat", (data) => {
-		db.push('chats', data)
-		io.emit("chat", data)
+
+	ws.on('error', () => ws.terminate());
+
+	ws.on('close', () => {
+		console.log(new Date().toUTCString(), "Client has disconnected --", ws.id);
+		wss.broadcast(JSON.stringify({ type: 'peer_disconnect', id: ws.id }));
+		delete peers[ws.id];
 	});
 });
+
+wss.broadcast = function (data) {
+	this.clients.forEach(client => {
+		if (client.readyState === WebSocket.OPEN) client.send(data);
+	});
+};
+
 http.listen(80);
 https.listen(443);
 console.log("Server is on!");
-const readline = require("readline");
-const rl = readline.createInterface({input: process.stdin, output: process.stdout});
 
-function commands() {
-	rl.question("Command (video/chats/resetchats): ", function (cmd) {
-		if (cmd === "video") {
-		rl.question("Video URL: ", function (url) {
-			io.sockets.emit("video", url);
-			commands();
-		});
-		} else if (cmd === "chats") {
-			console.log(db.get('chats'));
-			console();
-		} else if (cmd === "resetchats") {
-			db.set('chats', []);
-			commands();
-		} else commands();
-	});
-}
-rl.on("close", function () {
-  console.log("\nBYE!");
-  process.exit(0);
-});
-commands();
+const randomColour = (() => {
+	const randomInt = (min, max) => { return Math.floor(Math.random() * (max - min + 1)) + min; };
+
+	return () => {
+		var h = randomInt(0, 360);
+		var s = randomInt(42, 98);
+		var l = randomInt(40, 90);
+		return `hsl(${h},${s}%,${l}%)`;
+	};
+})();
