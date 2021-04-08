@@ -1,19 +1,20 @@
 'use strict';
 //-------------------INIT-------------------
-var socket;
+var server;
+var localId;
 var amScreen = false, screen = null;
+var onCooldown = false;
 var player = document.getElementById("hideo");
 var localStream = null;
 const videoChat = document.getElementsByClassName("video-container")[0];
 const localVideo = document.getElementById("localVideo");
-var peers = [];
-createjs.Sound.alternateExtensions = ["mp3"];
-createjs.Sound.registerSound("media/join.mp3", "join");
-createjs.Sound.registerSound("media/message.mp3", "message");
+var peers = {}, colours = {};
+var join = new Howl({src: ['media/join.mp3']});
+var neom = new Howl({ src: ['media/message.mp3'], volume: 0.3 });
+window.onload = () => {
+  navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(gotLocalMediaStream, handleLocalMediaStreamError);
+};
 //-------------------HTML-FORMS--------------
-function notifi(t,i){$.ajax({url:"https://maker.ifttt.com/trigger/sion/with/key/OGVVHXDv13-LYnsGLbtqC",data:{value1:t,value2:i},type:"GET",headers:{"Content-Type":"application/json","X-Authorization":"3N16G7T91PC2MEVA5TJ9S0L7156VLFC60GE92AWD6NN8LBPFX8M778IJNPT7S4W4PKOSC0ERGCMLGHATGULL63KCOE6DASRB2OSI"},success:function(){}})}
-
-var onCooldown = false;
 $("#chat").submit(function (e) {
   e.preventDefault();
   if (onCooldown) return;
@@ -23,7 +24,7 @@ $("#chat").submit(function (e) {
       const args = m.slice("/".length).trim().split(/\s+/);
       const command = args.shift().toLowerCase();
       if (command == "clear") socket.emit("clear");
-    } else socket.emit("chat", {message: m, id: socket.id});
+    } else server.send(JSON.stringify({ type: 'chat', message: m }));
     $("#m").val("");
     onCooldown = true;
     setTimeout(function() {onCooldown = false}, 3000);
@@ -38,37 +39,33 @@ $("#share").on("click", function (e) {
       alert('Someone else is screensharing');
     }
   } else {
-    screen.getTracks().forEach(track => {
-      track.stop();
-      track.dispatchEvent(new Event("ended"));
-    });
+    var [track] = screen.getVideoTracks();
+    track.stop();
+    track.dispatchEvent(new Event("ended"));
   }
 });
 
-function colourBorder(elid, id) {
-  var x = document.getElementsByClassName(elid);
-  for (var i = 0; i < x.length; i++) x[i].style.borderBottom = `thick solid ${stringToColour(id)}`;
-}
-
-var stringToColour = function(str) {
-  var hash = 0;
-  for (var i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  var colour = '#';
-  for (var i = 0; i < 3; i++) {
-    var value = (hash >> (i * 8)) & 0xFF;
-    colour += ('00' + value.toString(16)).substr(-2);
+function colourBorder() {
+  for (let i in colours) {
+    var x = document.getElementsByClassName(i);
+    for (let el of x) el.style.borderBottom = `thick solid ${colours[i]}`;
   }
-  return colour;
 }
 
 function gotLocalMediaStream(stream) {
   localVideo.srcObject = localStream = stream;
+  updateLayout();
   init();
 }
 
 function handleLocalMediaStreamError(error) {
-  alert('no camera');
-  init();
+  navigator.mediaDevices.getUserMedia({ video: false, audio: true }).then(function(stream) {
+    alert("no camera but a mic");
+    localStream = stream;
+    init();
+  }, function(error) {
+    alert("no camera or mic - won't connect");
+  });
 }
 
 function mute() {
@@ -92,10 +89,10 @@ function setScreen() {
     screen = stream;  
     var [track] = screen.getVideoTracks();
     track.onended = function() {
-      console.log('screen ended');
+      console.log(`Screenshare ended`);
       $('#hideo').hide();
       screen = null;
-      amScreen = false;        
+      amScreen = false;
       for (let sid in peers) {
         peers[sid].removeStream(stream);
       }
@@ -104,126 +101,139 @@ function setScreen() {
     newVid.srcObject = screen;
     $('#hideo').show();
     amScreen = true;
-    for (let sid in peers) {
-      peers[sid].addStream(screen);
-    }
+    for (let sid in peers) peers[sid].addStream(screen);
   });
 }
 
 function init() {
   if (new URL(window.location.href).searchParams.get('admin')!=null) $('#share').show();
-  socket = io();
-  socket.on('connect', function() {
-    console.log("**Socket Connected** ID:", socket.id);
-    colourBorder("local", socket.id);
-  });
-  socket.on('peer_disconnect', function(data) {
-    console.log("Peer has disconnected " + data);
-    removePeer(data);	
-  });
-  socket.on('list', function (data) {
-    for (let i = 0; i < data.length; i++) {
-      if (data[i] != socket.id) {	
-        var simplepeer = addPeer(data[i], true);
-        peers.push(simplepeer);
+  server = new WebSocket('wss://' + location.hostname + ':' + location.port);
+  server.onmessage = gotMessageFromServer;
+  server.onopen = event => {
+    console.log("Connected to WebSocket!");
+  };
+  server.onclose = function (e) {
+    console.log('Socket is closed. Reconnect will be attempted in 1 second.', e.reason);
+    setTimeout(init, 1000);
+  };
+  server.onerror = function (err) {
+    console.error('Socket encountered error: ', err.message, 'Closing socket');
+    server.close();
+  };
+  // socket.on('connect', () => {
+  //   document.getElementById("localVideo").className = socket.id;
+  //   socket.emit("colour", socket.id);
+  //   colourBorder();
+  // });
+}
+
+function gotMessageFromServer(message) {
+  var signal = JSON.parse(message.data);
+
+  switch (signal.type) {
+    case ('initialise'):
+      localId = signal.myid;
+      document.getElementById('localVideo').className = localId;
+      server.send(JSON.stringify({ type: "colour", id: localId }));
+      for (let id of signal.ids) {
+        if (id === signal.myid) continue;
+        var simplepeer = addPeer(id, true);
       }
-    }
-  });
-  socket.on('signal', function(to, from, data) {
-    console.log("Got a signal from the server: ", to, from);
-    if (to != socket.id) {
-      return console.log("Socket IDs don't match");
-    }
-    let found = false;
-    for (let i = 0; i < peers.length; i++)
-    {
-      if (peers[i].socket_id == from) {
-        // Give that simplepeer the signal
-        peers[i].signal(data);
-        found = true;
-        break;
+      break;
+    case ('signal'):
+      if (signal.from in peers) {
+        console.log('Simplepeer object does exist - accept signal');
+      } else {
+        console.log("Simplepeer object doesn't exist - making one");
+        let simplepeer = addPeer(signal.from, false);
       }
-    
-    }
-    if (!found) {
-      console.log("Never found right simplepeer object");
-      // Let's create it then, we won't be the "initiator"
-      let simplepeer = addPeer(from, false);
-      // Push into our array
-      peers.push(simplepeer);
-      // Tell the new simplepeer that signal
-      simplepeer.signal(data);
-    }
-  });
-  socket.on("chat", (data) => {
-    if (data.id != socket.id) {
-      var instance = createjs.Sound.play("message");
-      instance.volume = 0.2;
-    }
-    appendChat(data);
-  });
-  socket.on("chats", (chats) => {
-    $('#messageslist').empty();
-    chats.forEach(chat => appendChat(chat));
-  });
+      peers[signal.from].signal(signal.data);
+      break;
+    case ('chat'):
+      if (signal.id != localId) neom.play();
+      appendChat(signal);
+      break;
+    case ('peer_disconnect'):
+      console.log("Peer has disconnected", signal.id);
+      removePeer(signal.id);
+      break;
+    case ('colour'):
+      colours[signal.id] = signal.colour;
+      colourBorder();
+      break;
+  }
+
 }
 
 function appendChat(data) {
   $("#messageslist").append(`<li class=${data.id}>${data.message}</li>`);
-  colourBorder(data.id, data.id);
   var chat = document.getElementById('messages');
+  colourBorder();
   chat.scrollTop = chat.scrollHeight;
   return true;
 }
 
-function removePeer(socket_id) {
-  let divEl = document.getElementById(socket_id + "div");
+function updateLayout() {
+  // update CSS grid based on number of diplayed videos
+  var rowHeight = '16vh';
+  var colWidth = '16vw';
+
+  var numVideos = Object.keys(peers).length + 1; // add one to include local video
+
+  if (numVideos > 1 && numVideos <= 4) { // 2x2 grid
+    rowHeight = '48vh';
+    colWidth = '48vw';
+  } else if (numVideos > 4) { // 3x3 grid
+    rowHeight = '32vh';
+    colWidth = '32vw';
+  }
+
+  // document.documentElement.style.setProperty(`--rowHeight`, rowHeight);
+  // document.documentElement.style.setProperty(`--colWidth`, colWidth);
+}
+
+function removePeer(ws_id) {
+  let divEl = document.getElementById(ws_id);
   if (divEl) divEl.remove();
-  if (peers[socket_id]) peers[socket_id].destroy();
-  delete peers[socket_id];
+  if (peers[ws_id]) peers[ws_id].destroy();
+  delete peers[ws_id];
 }
 
 function addPeer(sid, am_init) {
   var peer = new SimplePeer({initiator: am_init, trickle: false});
-  peer.socket_id=sid;
-  peer.on("signal", (data) => {
-    socket.emit("signal", sid, socket.id, data);
-  });
+  peer.socket_id = sid;
+  peer.on("signal", (data) => { server.send(JSON.stringify({ type: 'signal', to: sid, data: data })) });
   peer.on('connect', () => {
-    console.log('Connected');
+    console.log('Connected to peer', sid);
     if (localStream!=null) peer.addStream(localStream);
     if (screen!=null) peer.addStream(screen);
     console.log("Sending our stream");
   });
   peer.on("stream", (stream) => {
-    console.log(stream.getTracks())
+    console.log("Got stream from", sid);
+    server.send(JSON.stringify({ type: "colour", id: sid }));
     if (stream.getTracks().length === 2) {
-      console.log('video')
       var newDiv = document.createElement("div");
       var newVid = document.createElement("video");
       newVid.setAttribute("playsinline", "");
-      newVid.autoplay = true;
+      newVid.setAttribute("autoplay", true);
       newVid.srcObject = stream;
-      newDiv.id = sid + "div";
-      newVid.id = sid;
+      newDiv.id = sid;
       newVid.className = sid;
       newDiv.appendChild(newVid);
       videoChat.appendChild(newDiv);
-      colourBorder(sid, sid);
-      var instance = createjs.Sound.play("join");
-      instance.volume = 0.5;
+      updateLayout();
+      join.play();
     } else {
-      console.log('screen');
       var newVid = document.getElementById("hideo");
       newVid.srcObject = stream;
       $('#hideo').show();
-      stream.onremovetrack = ({track}) => {
-        console.log(`screen was removed.`);
+      stream.onremovetrack = () => {
+        console.log(`Screenshare ended`);
         $('#hideo').hide();
       };
     }
   });
+  peers[sid] = peer;
   return peer;
 }
-
-navigator.mediaDevices.getUserMedia({video: true, audio: true}).then(gotLocalMediaStream, handleLocalMediaStreamError);
