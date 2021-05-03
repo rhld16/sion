@@ -9,7 +9,7 @@
   </head>
   <body>
     <div class="video-container" id="video-container">
-      <div id="localDiv"><video data-tilt id="localVideo" width="350" autoplay muted playsinline></video></div>
+      <div id="localDiv"><video id="localVideo" width="350" autoplay muted playsinline></video></div>
     </div>
     <div id="mainstage"><video id="hideo" width="auto" autoplay playsinline></video></div>
     <span onclick="mute();" href="#" class="float"><i class="fas fa-microphone-slash my-float"></i></span>
@@ -31,10 +31,9 @@
       </form>
     </div>
   </body>
+  <script>if (location.protocol !== "https:") {location.protocol = "https:";}</script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.10.0/simplepeer.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.1/howler.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/tilt.js/1.2.1/tilt.jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.11.0/simplepeer.min.js"></script>
   <script src="main.js"></script>
 </html>
