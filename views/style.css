@@ -11,8 +11,6 @@ html, body {
   margin: 0px;
 }
 .video-container {
-  /* overflow-x: auto;
-  overflow-y: hidden; */
   white-space: nowrap;
   background-color: var(--main-color);
   position: absolute;

@@ -1,43 +1,35 @@
 'use strict';
 //-------------------INIT-------------------
-var server;
-var localId;
+var server, localId;
 var amScreen = false, screen = null;
 var onCooldown = false;
 var player = document.getElementById("hideo");
 var localStream = null;
 const videoChat = document.getElementsByClassName("video-container")[0];
 const localVideo = document.getElementById("localVideo");
-var peers = {}, colours = {};
-var join = new Howl({src: ['media/join.mp3']});
-var neom = new Howl({ src: ['media/message.mp3'], volume: 0.3 });
-window.onload = () => {
-  navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(gotLocalMediaStream, handleLocalMediaStreamError);
-};
+var peers = {}, colors = {};
+var join = new Audio('media/join.mp3');
+var neom = new Audio('media/message.mp3');
+window.onload = () => navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(gotLocalMediaStream, handleLocalMediaStreamError);
 //-------------------HTML-FORMS--------------
-$("#chat").submit(function (e) {
+var chat = document.getElementById('chat');
+var share = document.getElementById('share');
+chat.addEventListener("submit", function (e) {
   e.preventDefault();
   if (onCooldown) return;
-  var m = $("#m").val();
+  var m = document.getElementById('m').value;
   if (m != "") {
-    if (/^[\/]/.test(m)) {
-      const args = m.slice("/".length).trim().split(/\s+/);
-      const command = args.shift().toLowerCase();
-      if (command == "clear") socket.emit("clear");
-    } else server.send(JSON.stringify({ type: 'chat', message: m }));
-    $("#m").val("");
+    if (m == "/clear") socket.emit("clear");
+    else server.send(JSON.stringify({ type: 'chat', message: m }));
+    document.getElementById('m').value = "";
     onCooldown = true;
-    setTimeout(function() {onCooldown = false}, 3000);
+    setTimeout(() => {onCooldown = false}, 3000);
   }
 });
-$("#share").on("click", function (e) {
+share.addEventListener("click", function (e) {
   e.preventDefault();
   if (amScreen == false) {
-    if (screen == null) {
-      setScreen();
-    } else {
-      alert('Someone else is screensharing');
-    }
+    (screen == null) ? setScreen() : alert('Someone else is screensharing');
   } else {
     var [track] = screen.getVideoTracks();
     track.stop();
@@ -45,10 +37,9 @@ $("#share").on("click", function (e) {
   }
 });
 
-function colourBorder() {
-  for (let i in colours) {
-    var x = document.getElementsByClassName(i);
-    for (let el of x) el.style.borderBottom = `thick solid ${colours[i]}`;
+function colorBorder() {
+  for (let i in colors) {
+    for (let el of document.getElementsByClassName(i)) el.style.borderBottom = `thick solid ${colors[i]}`;
   }
 }
 
@@ -71,47 +62,41 @@ function handleLocalMediaStreamError(error) {
 function mute() {
   localStream.getAudioTracks().forEach((track) => {
     track.enabled = !track.enabled;
-    if (track.enabled == true) $(".my-float").replaceWith("<i class='fas fa-microphone-slash my-float'></i>");
-    else $(".my-float").replaceWith("<i class='fas fa-microphone my-float'></i>");
+    if (track.enabled == true) document.getElementsByClassName('my-float')[0].outerHTML = "<i class='fas fa-microphone-slash my-float'></i>";
+    else document.getElementsByClassName('my-float')[0].outerHTML = "<i class='fas fa-microphone my-float'></i>";
   });
 }
 
 function hide() {
   localStream.getVideoTracks().forEach((track) => {
     track.enabled = !track.enabled;
-    if (track.enabled == true) $(".my-floatcam").replaceWith("<i class='fas fa-video-slash my-floatcam'></i>");
-    else $(".my-floatcam").replaceWith("<i class='fas fa-video my-floatcam'></i>");
+    if (track.enabled == true) document.getElementsByClassName('my-floatcam')[0].outerHTML = "<i class='fas fa-video-slash my-floatcam'></i>";
+    else document.getElementsByClassName('my-floatcam')[0].outerHTML = "<i class='fas fa-video my-floatcam'></i>";
   });
 }
 
 function setScreen() {
-  navigator.mediaDevices.getDisplayMedia({video: true, audio: false}).then((stream) => {
-    screen = stream;  
+  navigator.mediaDevices.getDisplayMedia({ video: true, audio: false }).then(stream => {
+    screen = stream;
     var [track] = screen.getVideoTracks();
     track.onended = function() {
       console.log(`Screenshare ended`);
-      $('#hideo').hide();
+      player.style.display = 'none';
       screen = null;
       amScreen = false;
-      for (let sid in peers) {
-        peers[sid].removeStream(stream);
-      }
+      for (let sid in peers) peers[sid].removeStream(stream);
     }
-    var newVid = document.getElementById("hideo");
-    newVid.srcObject = screen;
-    $('#hideo').show();
+    player.srcObject = screen;
+    player.style.display = '';
     amScreen = true;
     for (let sid in peers) peers[sid].addStream(screen);
   });
 }
 
 function init() {
-  if (new URL(window.location.href).searchParams.get('admin')!=null) $('#share').show();
   server = new WebSocket('wss://' + location.hostname + ':' + location.port);
   server.onmessage = gotMessageFromServer;
-  server.onopen = event => {
-    console.log("Connected to WebSocket!");
-  };
+  server.onopen = event => console.log("Connected to WebSocket!");
   server.onclose = function (e) {
     console.log('Socket is closed. Reconnect will be attempted in 1 second.', e.reason);
     setTimeout(init, 1000);
@@ -122,8 +107,8 @@ function init() {
   };
   // socket.on('connect', () => {
   //   document.getElementById("localVideo").className = socket.id;
-  //   socket.emit("colour", socket.id);
-  //   colourBorder();
+  //   socket.emit("color", socket.id);
+  //   colorBorder();
   // });
 }
 
@@ -134,7 +119,7 @@ function gotMessageFromServer(message) {
     case ('initialise'):
       localId = signal.myid;
       document.getElementById('localVideo').className = localId;
-      server.send(JSON.stringify({ type: "colour", id: localId }));
+      server.send(JSON.stringify({ type: "color", id: localId }));
       for (let id of signal.ids) {
         if (id === signal.myid) continue;
         var simplepeer = addPeer(id, true);
@@ -157,18 +142,21 @@ function gotMessageFromServer(message) {
       console.log("Peer has disconnected", signal.id);
       removePeer(signal.id);
       break;
-    case ('colour'):
-      colours[signal.id] = signal.colour;
-      colourBorder();
+    case ('color'):
+      colors[signal.id] = signal.color;
+      colorBorder();
       break;
   }
 
 }
 
 function appendChat(data) {
-  $("#messageslist").append(`<li class=${data.id}>${data.message}</li>`);
+  var newmessage = document.createElement('li');
+  newmessage.className = data.id;
+  newmessage.textContent = data.message;
+  document.getElementById('messageslist').appendChild(newmessage);
   var chat = document.getElementById('messages');
-  colourBorder();
+  colorBorder();
   chat.scrollTop = chat.scrollHeight;
   return true;
 }
@@ -211,7 +199,7 @@ function addPeer(sid, am_init) {
   });
   peer.on("stream", (stream) => {
     console.log("Got stream from", sid);
-    server.send(JSON.stringify({ type: "colour", id: sid }));
+    server.send(JSON.stringify({ type: "color", id: sid }));
     if (stream.getTracks().length === 2) {
       var newDiv = document.createElement("div");
       var newVid = document.createElement("video");
@@ -225,12 +213,11 @@ function addPeer(sid, am_init) {
       updateLayout();
       join.play();
     } else {
-      var newVid = document.getElementById("hideo");
-      newVid.srcObject = stream;
-      $('#hideo').show();
+      player.srcObject = stream;
+      player.style.display = '';
       stream.onremovetrack = () => {
         console.log(`Screenshare ended`);
-        $('#hideo').hide();
+        player.style.display = 'none';
       };
     }
   });
