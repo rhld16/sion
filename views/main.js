@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 //-------------------INIT-------------------
 var server, localId;
 var amScreen = false, screen = null;
@@ -105,11 +105,6 @@ function init() {
     console.error('Socket encountered error: ', err.message, 'Closing socket');
     server.close();
   };
-  // socket.on('connect', () => {
-  //   document.getElementById("localVideo").className = socket.id;
-  //   socket.emit("color", socket.id);
-  //   colorBorder();
-  // });
 }
 
 function gotMessageFromServer(message) {
