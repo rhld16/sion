@@ -95,5 +95,5 @@ function drawStream(e) {
   }
 }
 function publish(data) {socket.emit("draw", data)};
-$("#undo").on("click", function() {socket.emit("undo")});
+document.querySelector("#undo").addEventListener('click', () => {socket.emit("undo")});
 var hueb = new Huebee( document.getElementById("color"), {setText: false, saturations: 1}).on( "change", function( color, hue, sat, lum ) {current.color = color;});
